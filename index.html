@@ -1,1 +1,31 @@
-<!DOCTYPE html><html><head><title>Prices Checker</title></head><body><h1>Welcome to Prices Checker</h1><p>Compare prices of everything!</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prices Checker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Prices Checker</h1>
+    <input type="text" id="searchBar" placeholder="Search for a product..." />
+  </header>
+
+  <main>
+    <section id="filters">
+      <select id="categoryFilter">
+        <option value="all">All Categories</option>
+        <option value="groceries">Groceries</option>
+        <option value="electronics">Electronics</option>
+        <option value="clothing">Clothing</option>
+        <!-- Add more as needed -->
+      </select>
+    </section>
+
+    <section id="productList" class="products"></section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
