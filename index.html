@@ -9,22 +9,20 @@
 <body>
   <header>
     <h1>Prices Checker</h1>
-    <input type="text" id="searchBar" placeholder="Search for a product..." />
+    <input type="text" id="searchInput" placeholder="Search for a product..." />
   </header>
 
-  <main>
-    <section id="filters">
-      <select id="categoryFilter">
-        <option value="all">All Categories</option>
-        <option value="groceries">Groceries</option>
-        <option value="electronics">Electronics</option>
-        <option value="clothing">Clothing</option>
-        <!-- Add more as needed -->
-      </select>
-    </section>
+  <section id="filters">
+    <select id="categoryFilter">
+      <option value="all">All Categories</option>
+    </select>
+  </section>
 
-    <section id="productList" class="products"></section>
-  </main>
+  <main id="productList" class="product-list"></main>
+
+  <footer>
+    <p>&copy; 2025 Prices Checker. All rights reserved.</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
