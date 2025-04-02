@@ -2,27 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prices Checker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>Prices Checker</h1>
-    <input type="text" id="searchInput" placeholder="Search for a product..." />
+    <input type="text" id="searchBar" placeholder="Search for a product..." />
   </header>
 
   <section id="filters">
     <select id="categoryFilter">
       <option value="all">All Categories</option>
     </select>
+
+    <select id="locationFilter">
+      <option value="all">All Locations</option>
+    </select>
   </section>
 
-  <main id="productList" class="product-list"></main>
-
-  <footer>
-    <p>&copy; 2025 Prices Checker. All rights reserved.</p>
-  </footer>
+  <main id="productList"></main>
 
   <script src="script.js"></script>
 </body>
