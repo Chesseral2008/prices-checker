@@ -1,85 +1,135 @@
-
 const products = [
-  { name: "Gasoline", brand: "Petron", storeLocation: "Petron - SLEX", category: "fuel", price: 65 },
-  { name: "Gasoline", brand: "Shell", storeLocation: "Shell - EDSA", category: "fuel", price: 60 },
-  { name: "Gasoline", brand: "Caltex", storeLocation: "Caltex - Taguig", category: "fuel", price: 62.5 },
-  { name: "Rice 5kg", brand: "Sinandomeng", storeLocation: "Puregold - Manila", category: "groceries", price: 320 },
-  { name: "Rice 5kg", brand: "Angelica", storeLocation: "SM Supermarket - QC", category: "groceries", price: 310 },
-  { name: "Rice 5kg", brand: "Golden Phoenix", storeLocation: "WalterMart - Cavite", category: "groceries", price: 335 },
-  { name: "Smartphone", brand: "Apple", storeLocation: "Power Mac - BGC", category: "electronics", price: 75000 },
-  { name: "Smartphone", brand: "Samsung", storeLocation: "Samsung Store - Makati", category: "electronics", price: 48000 },
+  {
+    name: "Gasoline / Liter",
+    category: "fuel",
+    items: [
+      { brand: "Petron", store: "Petron - SLEX", price: 65 },
+      { brand: "Shell", store: "Shell - EDSA", price: 60 },
+      { brand: "Caltex", store: "Caltex - Taguig", price: 62.5 }
+    ]
+  },
+  {
+    name: "Rice 5kg",
+    category: "groceries",
+    items: [
+      { brand: "Sinandomeng", store: "Puregold - Manila", price: 320 },
+      { brand: "Angelica", store: "SM Supermarket - QC", price: 310 },
+      { brand: "Golden Phoenix", store: "WalterMart - Cavite", price: 335 }
+    ]
+  },
+  {
+    name: "Smartphone A15",
+    category: "electronics",
+    items: [
+      { brand: "Samsung", store: "SM Cyberzone - Makati", price: 12000 },
+      { brand: "Realme", store: "Robinsons - Manila", price: 10999 },
+      { brand: "Xiaomi", store: "Greenhills - San Juan", price: 11500 }
+    ]
+  }
 ];
 
+const searchBar = document.getElementById("searchBar");
 const categoryFilter = document.getElementById("categoryFilter");
 const locationFilter = document.getElementById("locationFilter");
-const searchInput = document.getElementById("searchInput");
-const productsContainer = document.getElementById("productsContainer");
+const productList = document.getElementById("productList");
 
-function getUniqueOptions(items, key) {
-  return [...new Set(items.map(item => item[key]))];
+function getAllCategories() {
+  return [...new Set(products.map(p => p.category))];
 }
 
-function populateFilters() {
-  getUniqueOptions(products, "category").forEach(cat => {
+function getAllLocations() {
+  const allLocations = [];
+  products.forEach(p => {
+    p.items.forEach(i => {
+      const location = i.store.split(" - ")[1];
+      if (location && !allLocations.includes(location)) {
+        allLocations.push(location);
+      }
+    });
+  });
+  return allLocations;
+}
+
+function renderFilters() {
+  getAllCategories().forEach(category => {
     const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    option.value = category;
+    option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
     categoryFilter.appendChild(option);
   });
 
-  getUniqueOptions(products, "storeLocation").forEach(loc => {
+  getAllLocations().forEach(location => {
     const option = document.createElement("option");
-    option.value = loc;
-    option.textContent = loc;
+    option.value = location;
+    option.textContent = location;
     locationFilter.appendChild(option);
   });
 }
 
-function displayProducts() {
-  const category = categoryFilter.value;
-  const location = locationFilter.value;
-  const searchText = searchInput.value.toLowerCase();
-  
-  productsContainer.innerHTML = "";
+function renderProducts() {
+  const query = searchBar.value.toLowerCase();
+  const selectedCategory = categoryFilter.value;
+  const selectedLocation = locationFilter.value;
 
-  const grouped = {};
+  productList.innerHTML = "";
 
   products.forEach(product => {
-    if ((category === "all" || product.category === category) &&
-        (location === "all" || product.storeLocation === location) &&
-        (product.name.toLowerCase().includes(searchText) || product.brand.toLowerCase().includes(searchText))) {
-      if (!grouped[product.name]) {
-        grouped[product.name] = [];
+    if (selectedCategory !== "all" && product.category !== selectedCategory) return;
+    if (!product.name.toLowerCase().includes(query)) return;
+
+    const productCard = document.createElement("div");
+    productCard.className = "product-card";
+
+    const title = document.createElement("h2");
+    title.textContent = product.name;
+    productCard.appendChild(title);
+
+    const table = document.createElement("table");
+
+    const header = document.createElement("tr");
+    ["Brand", "Store", "Price"].forEach(h => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      header.appendChild(th);
+    });
+    table.appendChild(header);
+
+    const sortedItems = [...product.items].sort((a, b) => a.price - b.price);
+    const lowestPrice = sortedItems[0].price;
+
+    sortedItems.forEach(item => {
+      const location = item.store.split(" - ")[1];
+      if (selectedLocation !== "all" && location !== selectedLocation) return;
+
+      const row = document.createElement("tr");
+
+      const brandCell = document.createElement("td");
+      brandCell.textContent = item.brand;
+      row.appendChild(brandCell);
+
+      const storeCell = document.createElement("td");
+      storeCell.textContent = item.store;
+      row.appendChild(storeCell);
+
+      const priceCell = document.createElement("td");
+      priceCell.textContent = `₱${item.price.toFixed(2)}`;
+      if (item.price === lowestPrice) {
+        priceCell.style.color = "green";
+        priceCell.style.fontWeight = "bold";
       }
-      grouped[product.name].push(product);
-    }
+      row.appendChild(priceCell);
+
+      table.appendChild(row);
+    });
+
+    productCard.appendChild(table);
+    productList.appendChild(productCard);
   });
-
-  for (const [productName, entries] of Object.entries(grouped)) {
-    const card = document.createElement("div");
-    card.className = "product-card";
-
-    let rows = entries.map(entry => 
-      `<tr>
-        <td>${entry.brand}</td>
-        <td>${entry.storeLocation}</td>
-        <td${entry.price === Math.min(...entries.map(e => e.price)) ? ' class="price-highlight"' : ''}>â‚±${entry.price.toFixed(2)}</td>
-      </tr>`).join("");
-
-    card.innerHTML = `
-      <h2>${productName}</h2>
-      <table>
-        <thead><tr><th>Brand</th><th>Store / Location</th><th>Price</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-    productsContainer.appendChild(card);
-  }
 }
 
-populateFilters();
-displayProducts();
+searchBar.addEventListener("input", renderProducts);
+categoryFilter.addEventListener("change", renderProducts);
+locationFilter.addEventListener("change", renderProducts);
 
-searchInput.addEventListener("input", displayProducts);
-categoryFilter.addEventListener("change", displayProducts);
-locationFilter.addEventListener("change", displayProducts);
+renderFilters();
+renderProducts();
