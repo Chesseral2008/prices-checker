@@ -1,37 +1,47 @@
 const products = [
-  { name: "Rice 5kg", price: 320, category: "groceries", store: "SM Supermarket - Manila" },
-  { name: "Canned Tuna", price: 45, category: "groceries", store: "Robinsons - Cebu" },
-  { name: "Milk 1L", price: 70, category: "groceries", store: "Puregold - Davao" },
-  { name: "Bread Loaf", price: 55, category: "groceries", store: "WalterMart - Laguna" },
-  { name: "Eggs Dozen", price: 85, category: "groceries", store: "Mercury Fresh - QC" },
-  { name: "Smartphone A15", price: 11999, category: "electronics", store: "Lazada - Online" },
-  { name: "Smartwatch X3", price: 2799, category: "electronics", store: "Shopee - Online" },
-  { name: "Laptop 14\"", price: 28999, category: "electronics", store: "SM Appliance - BGC" },
-  { name: "Headphones BT", price: 899, category: "electronics", store: "Datablitz - SM North" },
-  { name: "Powerbank 20,000mAh", price: 1299, category: "electronics", store: "Anker - Lazada" },
-  { name: "Men's Shirt", price: 349, category: "clothing", store: "Uniqlo - MOA" },
-  { name: "Jeans", price: 799, category: "clothing", store: "Levi's - Greenbelt" },
-  { name: "Jacket", price: 1299, category: "clothing", store: "Penshoppe - Ayala Cebu" },
-  { name: "Women's Dress", price: 999, category: "clothing", store: "Zalora - Online" },
-  { name: "Sneakers", price: 2499, category: "clothing", store: "Nike - Glorietta" },
-  { name: "Paracetamol", price: 6, category: "medicine", store: "Mercury Drug - BGC" },
-  { name: "Vitamin C 500mg", price: 4, category: "medicine", store: "Watsons - QC" },
-  { name: "Loperamide", price: 2.5, category: "medicine", store: "Generika - Makati" },
-  { name: "Ibuprofen", price: 7, category: "medicine", store: "Southstar Drug - Bulacan" },
-  { name: "Amoxicillin", price: 8, category: "medicine", store: "The Generics Pharmacy - Taguig" },
-  { name: "Gasoline / Liter", price: 62.15, category: "fuel", store: "Petron - SLEX" },
-  { name: "Diesel / Liter", price: 58.35, category: "fuel", store: "Shell - EDSA" },
-  { name: "Tricycle Fare", price: 15, category: "transport", store: "Local - QC" },
-  { name: "Jeepney Fare", price: 13, category: "transport", store: "Local - NCR" },
-  { name: "Bus Fare (Metro)", price: 40, category: "transport", store: "EDSA Carousel" },
-  { name: "Taxi Flagdown", price: 45, category: "transport", store: "Metro Manila" },
-  { name: "Motorcycle Ride (5km)", price: 95, category: "transport", store: "Angkas" },
-  { name: "Ballpen", price: 12, category: "school", store: "National Bookstore - Makati" },
-  { name: "Notebook 100p", price: 28, category: "school", store: "Fully Booked - BGC" },
-  { name: "Backpack", price: 899, category: "school", store: "JanSport - Online" },
-  { name: "Uniform Set", price: 799, category: "school", store: "SM Store - Davao" },
-  { name: "School Shoes", price: 1150, category: "school", store: "Payless - MOA" },
-  // Add more anytime
+  {
+    name: "Gasoline / Liter",
+    category: "fuel",
+    prices: [
+      { brand: "Petron", store: "Petron - SLEX", price: 65 },
+      { brand: "Shell", store: "Shell - EDSA", price: 60 },
+      { brand: "Caltex", store: "Caltex - Taguig", price: 62.5 }
+    ]
+  },
+  {
+    name: "Rice 5kg",
+    category: "groceries",
+    prices: [
+      { brand: "Sinandomeng", store: "Puregold - Manila", price: 320 },
+      { brand: "Angelica", store: "SM Supermarket - QC", price: 310 },
+      { brand: "Golden Phoenix", store: "WalterMart - Cavite", price: 335 }
+    ]
+  },
+  {
+    name: "Paracetamol",
+    category: "medicine",
+    prices: [
+      { brand: "Biogesic", store: "Mercury Drug - Taguig", price: 6.5 },
+      { brand: "Rexidol", store: "Generika - Manila", price: 5.75 },
+      { brand: "Medicol", store: "Watsons - BGC", price: 7.00 }
+    ]
+  },
+  {
+    name: "Tricycle Fare (short ride)",
+    category: "transport",
+    prices: [
+      { brand: "Local - QC", store: "Tricycle Terminal A", price: 15 },
+      { brand: "Local - Laguna", store: "Tricycle Terminal B", price: 12 }
+    ]
+  },
+  {
+    name: "Jeepney Fare (Metro Manila)",
+    category: "transport",
+    prices: [
+      { brand: "Standard Jeepney", store: "NCR Route", price: 13 },
+      { brand: "Modern PUV", store: "BGC Route", price: 14 }
+    ]
+  }
 ];
 
 const productList = document.getElementById("productList");
@@ -48,12 +58,36 @@ function renderProducts(items) {
   items.forEach(product => {
     const card = document.createElement("div");
     card.className = "product-card";
+
+    // Get lowest price
+    const lowestPrice = Math.min(...product.prices.map(p => p.price));
+
+    // Build table rows
+    const rows = product.prices.map(p => {
+      const isBest = p.price === lowestPrice ? 'best-price' : '';
+      return `
+        <tr>
+          <td>${p.brand}</td>
+          <td>${p.store}</td>
+          <td class="${isBest}">₱${p.price.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join("");
+
     card.innerHTML = `
       <h2>${product.name}</h2>
-      <p><strong>₱${product.price.toLocaleString()}</strong></p>
-      <p>Category: ${product.category}</p>
-      <p>Store: ${product.store}</p>
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Store</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
     `;
+
     productList.appendChild(card);
   });
 }
@@ -83,5 +117,6 @@ function populateCategories() {
 searchInput.addEventListener("input", updateFilters);
 categoryFilter.addEventListener("change", updateFilters);
 
+// Init
 populateCategories();
 renderProducts(products);
