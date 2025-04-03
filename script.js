@@ -9,6 +9,15 @@ const products = [
     ]
   },
   {
+    name: "Diesel / Liter",
+    category: "fuel",
+    items: [
+      { brand: "Shell", store: "Shell - Laguna", price: 58 },
+      { brand: "Petron", store: "Petron - Cavite", price: 59.5 },
+      { brand: "Caltex", store: "Caltex - Batangas", price: 57.25 }
+    ]
+  },
+  {
     name: "Rice 5kg",
     category: "groceries",
     items: [
@@ -18,118 +27,126 @@ const products = [
     ]
   },
   {
-    name: "Smartphone A15",
+    name: "Eggs Dozen",
+    category: "groceries",
+    items: [
+      { brand: "Bounty Fresh", store: "Robinsons - Makati", price: 95 },
+      { brand: "Magnolia", store: "Puregold - Marikina", price: 92 },
+      { brand: "SM Bonus", store: "SM - Bacoor", price: 89 }
+    ]
+  },
+  {
+    name: "Canned Tuna",
+    category: "groceries",
+    items: [
+      { brand: "Century", store: "7-Eleven - BGC", price: 45 },
+      { brand: "555", store: "Puregold - Manila", price: 38 },
+      { brand: "Mega", store: "Robinsons - Laguna", price: 40.5 }
+    ]
+  },
+  {
+    name: "Milk 1L",
+    category: "groceries",
+    items: [
+      { brand: "Alaska", store: "SM - San Juan", price: 75 },
+      { brand: "Bear Brand", store: "7-Eleven - Taguig", price: 79 },
+      { brand: "Selecta", store: "Robinsons - BGC", price: 74.5 }
+    ]
+  },
+  {
+    name: "Paracetamol Tablet",
+    category: "medicine",
+    items: [
+      { brand: "Biogesic", store: "Mercury Drug - Taguig", price: 6.5 },
+      { brand: "Rexidol", store: "Generika - Manila", price: 5.75 },
+      { brand: "Medicol", store: "Watsons - BGC", price: 7.00 }
+    ]
+  },
+  {
+    name: "Vitamin C 500mg",
+    category: "medicine",
+    items: [
+      { brand: "Cenovis", store: "Mercury - Makati", price: 8.5 },
+      { brand: "Rhea", store: "Southstar - Manila", price: 4.5 },
+      { brand: "Watsons", store: "Watsons - Cavite", price: 5.25 }
+    ]
+  },
+  {
+    name: "Smartphone (mid-range)",
     category: "electronics",
     items: [
-      { brand: "Samsung", store: "SM Cyberzone - Makati", price: 12000 },
-      { brand: "Realme", store: "Robinsons - Manila", price: 10999 },
-      { brand: "Xiaomi", store: "Greenhills - San Juan", price: 11500 }
+      { brand: "Samsung A14", store: "Samsung Store - Makati", price: 9500 },
+      { brand: "realme 11", store: "Lazada - Online", price: 10500 },
+      { brand: "Infinix Note 30", store: "Shopee - Online", price: 9999 }
+    ]
+  },
+  {
+    name: "Laptop 15”",
+    category: "electronics",
+    items: [
+      { brand: "Acer Aspire", store: "Octagon - BGC", price: 29999 },
+      { brand: "HP Pavilion", store: "Lazada - Online", price: 31999 },
+      { brand: "Lenovo IdeaPad", store: "Shopee - Online", price: 28999 }
+    ]
+  },
+  {
+    name: "Men's T-Shirt",
+    category: "clothing",
+    items: [
+      { brand: "Bench", store: "SM - QC", price: 299 },
+      { brand: "Penshoppe", store: "Glorietta - Makati", price: 325 },
+      { brand: "Uniqlo", store: "Uniqlo - MOA", price: 590 }
+    ]
+  },
+  {
+    name: "Sneakers",
+    category: "clothing",
+    items: [
+      { brand: "Nike", store: "Nike Store - MOA", price: 4295 },
+      { brand: "Adidas", store: "Adidas - Greenbelt", price: 4500 },
+      { brand: "World Balance", store: "SM - Davao", price: 1995 }
+    ]
+  },
+  {
+    name: "Tricycle Fare",
+    category: "transport",
+    items: [
+      { brand: "Standard", store: "Brgy. Taguig", price: 15 },
+      { brand: "Electric", store: "Cainta Terminal", price: 20 }
+    ]
+  },
+  {
+    name: "Jeepney Fare",
+    category: "transport",
+    items: [
+      { brand: "Traditional", store: "NCR Routes", price: 13 },
+      { brand: "Modern PUV", store: "Pasig", price: 14 }
+    ]
+  },
+  {
+    name: "GrabCar (5km)",
+    category: "transport",
+    items: [
+      { brand: "Grab", store: "Metro Manila", price: 160 },
+      { brand: "Joyride", store: "Metro Manila", price: 140 }
+    ]
+  },
+  {
+    name: "School Shoes",
+    category: "school",
+    items: [
+      { brand: "Barbie", store: "SM Kids - QC", price: 850 },
+      { brand: "Titan", store: "Lazada", price: 795 },
+      { brand: "Generic", store: "Market - Laguna", price: 650 }
+    ]
+  },
+  {
+    name: "Ballpen",
+    category: "school",
+    items: [
+      { brand: "Panda", store: "National Bookstore", price: 12 },
+      { brand: "Pilot", store: "SM Supplies - QC", price: 18 },
+      { brand: "Faber Castell", store: "Office Warehouse", price: 15 }
     ]
   }
 ];
-
-const searchBar = document.getElementById("searchBar");
-const categoryFilter = document.getElementById("categoryFilter");
-const locationFilter = document.getElementById("locationFilter");
-const productList = document.getElementById("productList");
-
-function getAllCategories() {
-  return [...new Set(products.map(p => p.category))];
-}
-
-function getAllLocations() {
-  const allLocations = [];
-  products.forEach(p => {
-    p.items.forEach(i => {
-      const location = i.store.split(" - ")[1];
-      if (location && !allLocations.includes(location)) {
-        allLocations.push(location);
-      }
-    });
-  });
-  return allLocations;
-}
-
-function renderFilters() {
-  getAllCategories().forEach(category => {
-    const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-    categoryFilter.appendChild(option);
-  });
-
-  getAllLocations().forEach(location => {
-    const option = document.createElement("option");
-    option.value = location;
-    option.textContent = location;
-    locationFilter.appendChild(option);
-  });
-}
-
-function renderProducts() {
-  const query = searchBar.value.toLowerCase();
-  const selectedCategory = categoryFilter.value;
-  const selectedLocation = locationFilter.value;
-
-  productList.innerHTML = "";
-
-  products.forEach(product => {
-    if (selectedCategory !== "all" && product.category !== selectedCategory) return;
-    if (!product.name.toLowerCase().includes(query)) return;
-
-    const productCard = document.createElement("div");
-    productCard.className = "product-card";
-
-    const title = document.createElement("h2");
-    title.textContent = product.name;
-    productCard.appendChild(title);
-
-    const table = document.createElement("table");
-
-    const header = document.createElement("tr");
-    ["Brand", "Store", "Price"].forEach(h => {
-      const th = document.createElement("th");
-      th.textContent = h;
-      header.appendChild(th);
-    });
-    table.appendChild(header);
-
-    const sortedItems = [...product.items].sort((a, b) => a.price - b.price);
-    const lowestPrice = sortedItems[0].price;
-
-    sortedItems.forEach(item => {
-      const location = item.store.split(" - ")[1];
-      if (selectedLocation !== "all" && location !== selectedLocation) return;
-
-      const row = document.createElement("tr");
-
-      const brandCell = document.createElement("td");
-      brandCell.textContent = item.brand;
-      row.appendChild(brandCell);
-
-      const storeCell = document.createElement("td");
-      storeCell.textContent = item.store;
-      row.appendChild(storeCell);
-
-      const priceCell = document.createElement("td");
-      priceCell.textContent = `₱${item.price.toFixed(2)}`;
-      if (item.price === lowestPrice) {
-        priceCell.style.color = "green";
-        priceCell.style.fontWeight = "bold";
-      }
-      row.appendChild(priceCell);
-
-      table.appendChild(row);
-    });
-
-    productCard.appendChild(table);
-    productList.appendChild(productCard);
-  });
-}
-
-searchBar.addEventListener("input", renderProducts);
-categoryFilter.addEventListener("change", renderProducts);
-locationFilter.addEventListener("change", renderProducts);
-
-renderFilters();
-renderProducts();
