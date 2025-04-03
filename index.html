@@ -7,22 +7,17 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
+  <div class="container">
     <h1>Prices Checker</h1>
-    <input type="text" id="searchInput" placeholder="Search for a product..." />
-  </header>
-
-  <section id="filters">
+    <input type="text" id="searchInput" placeholder="Search for a product...">
     <select id="categoryFilter">
       <option value="all">All Categories</option>
     </select>
     <select id="locationFilter">
       <option value="all">All Locations</option>
     </select>
-  </section>
-
-  <main id="productsContainer"></main>
-
-  <script src="script.js" defer></script>
+    <div id="productList"></div>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
