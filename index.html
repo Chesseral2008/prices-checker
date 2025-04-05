@@ -7,24 +7,17 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-container">
+  <div class="container">
     <h1>Prices Checker</h1>
-
-    <div class="filters">
-      <input type="text" id="searchInput" placeholder="Search brand or store..." />
-      <select id="categoryFilter">
-        <option value="all">All Categories</option>
-      </select>
-      <select id="locationFilter">
-        <option value="all">All Locations</option>
-      </select>
-    </div>
-
-    <div id="productList" class="product-list">
-      <!-- Products will be rendered here -->
-    </div>
+    <input type="text" id="searchInput" placeholder="Search brand or store..." />
+    <select id="categoryFilter">
+      <option value="all">All Categories</option>
+    </select>
+    <select id="locationFilter">
+      <option value="all">All Locations</option>
+    </select>
+    <div id="productList"></div>
   </div>
-
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
