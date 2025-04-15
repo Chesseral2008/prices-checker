@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="All Products and Services in the World! Compare prices of groceries, fuel, gadgets, services, and more."/>
   <title>Prices Checker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -12,21 +11,17 @@
     <h1>Prices Checker</h1>
     <p class="tagline">Checks and Compares Prices of Everything — Get the Best and Cheapest Price!</p>
 
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search brand, store, or product."
-    />
-
+    <input type="text" id="searchInput" placeholder="Search brand, store, or product.">
+    
     <select id="categoryFilter">
       <option value="">All Categories</option>
     </select>
-
+    
     <select id="locationFilter">
       <option value="">All Locations</option>
     </select>
 
-    <div id="productList"></div>
+    <div id="productsContainer"></div>
   </div>
 
   <script src="script.js"></script>
