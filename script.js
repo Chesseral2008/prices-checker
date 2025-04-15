@@ -1,107 +1,136 @@
-// Fetch data from Supabase
-const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+// Initialize Supabase client
+const { createClient } = supabase;
+const supabaseUrl = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-const categoryFilter = document.getElementById('categoryFilter');
-const locationFilter = document.getElementById('locationFilter');
-const searchInput = document.getElementById('searchInput');
-const resultsContainer = document.getElementById('resultsContainer');
-
-let allData = [];
-
-async function fetchData() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
+// Fetch and display products
+async function fetchProducts() {
+    const { data, error } = await supabase.from('full_products_view').select('*');
+    if (error) {
+        console.error('Error fetching data:', error);
+        return;
     }
-  });
-  const data = await res.json();
-  allData = data;
-  populateFilters();
-  renderResults();
+
+    const grouped = groupByCategory(data);
+    displayProducts(grouped);
+    populateFilters(data);
 }
 
-function populateFilters() {
-  const categories = Array.from(new Set(allData.map(item => item.category))).sort();
-  const locations = Array.from(new Set(allData.map(item => item.location))).sort();
-
-  categories.forEach(category => {
-    const opt = document.createElement("option");
-    opt.value = category;
-    opt.textContent = category;
-    categoryFilter.appendChild(opt);
-  });
-
-  locations.forEach(location => {
-    const opt = document.createElement("option");
-    opt.value = location;
-    opt.textContent = location;
-    locationFilter.appendChild(opt);
-  });
+// Group products by category
+function groupByCategory(products) {
+    return products.reduce((groups, product) => {
+        const category = product.category || 'Uncategorized';
+        if (!groups[category]) groups[category] = [];
+        groups[category].push(product);
+        return groups;
+    }, {});
 }
 
-function renderResults() {
-  const categoryValue = categoryFilter.value;
-  const locationValue = locationFilter.value;
-  const searchValue = searchInput.value.toLowerCase();
+// Display products on the page
+function displayProducts(groupedProducts) {
+    const container = document.getElementById('productsContainer');
+    container.innerHTML = '';
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const selectedLocation = document.getElementById('locationFilter').value.toLowerCase();
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
-  const grouped = {};
+    for (const category in groupedProducts) {
+        let products = groupedProducts[category];
 
-  allData.forEach(item => {
-    const key = item.name;
-    if (
-      (categoryValue === "All" || item.category === categoryValue) &&
-      (locationValue === "All" || item.location === locationValue) &&
-      (item.name.toLowerCase().includes(searchValue) ||
-       item.brand.toLowerCase().includes(searchValue) ||
-       item.store.toLowerCase().includes(searchValue))
-    ) {
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(item);
+        if (selectedCategory && selectedCategory !== category) continue;
+
+        products = products.filter(p => {
+            const matchLocation = selectedLocation === '' || (p.location || '').toLowerCase().includes(selectedLocation);
+            const matchSearch = !searchTerm || 
+                (p.brand && p.brand.toLowerCase().includes(searchTerm)) || 
+                (p.store && p.store.toLowerCase().includes(searchTerm)) ||
+                (p.name && p.name.toLowerCase().includes(searchTerm));
+            return matchLocation && matchSearch;
+        });
+
+        if (products.length === 0) continue;
+
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'category';
+        const header = document.createElement('h2');
+        header.textContent = category;
+        categoryDiv.appendChild(header);
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>Name</th>
+                <th>Brand</th>
+                <th>Store</th>
+                <th>Location</th>
+                <th>Unit</th>
+                <th>Specs</th>
+                <th>Price</th>
+            </tr>`;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        const minPrice = Math.min(...products.map(p => parseFloat(p.price)).filter(p => !isNaN(p)));
+
+        products.forEach(product => {
+            const row = document.createElement('tr');
+            const price = parseFloat(product.price);
+            const isLowest = price === minPrice;
+            row.innerHTML = `
+                <td>${product.name || ''}</td>
+                <td>${product.brand || ''}</td>
+                <td>${product.store || ''}</td>
+                <td>${product.location || ''}</td>
+                <td>${product.unit || ''}</td>
+                <td>${product.specs || ''}</td>
+                <td class="${isLowest ? 'highlight' : ''}">₱${price.toLocaleString()}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+        categoryDiv.appendChild(table);
+        container.appendChild(categoryDiv);
     }
-  });
-
-  resultsContainer.innerHTML = "";
-
-  Object.keys(grouped).forEach(name => {
-    const productItems = grouped[name];
-    const minPrice = Math.min(...productItems.map(p => p.price));
-
-    const table = document.createElement("table");
-    const header = `
-      <thead>
-        <tr>
-          <th colspan="4" style="text-align:left; font-size:18px;">${name}</th>
-        </tr>
-        <tr>
-          <th>Brand</th>
-          <th>Store</th>
-          <th>Location</th>
-          <th>Price</th>
-        </tr>
-      </thead>
-    `;
-
-    const rows = productItems.map(item => {
-      const isLowest = item.price === minPrice ? "lowest-price" : "";
-      return `
-        <tr>
-          <td>${item.brand}</td>
-          <td>${item.store}</td>
-          <td>${item.location}</td>
-          <td class="${isLowest}">₱${item.price.toFixed(2)}</td>
-        </tr>
-      `;
-    }).join("");
-
-    table.innerHTML = header + "<tbody>" + rows + "</tbody>";
-    resultsContainer.appendChild(table);
-  });
 }
 
-searchInput.addEventListener("input", renderResults);
-categoryFilter.addEventListener("change", renderResults);
-locationFilter.addEventListener("change", renderResults);
+// Populate filter dropdowns
+function populateFilters(products) {
+    const categorySet = new Set();
+    const locationSet = new Set();
 
-fetchData();
+    products.forEach(p => {
+        if (p.category) categorySet.add(p.category);
+        if (p.location) locationSet.add(p.location);
+    });
+
+    const categoryFilter = document.getElementById('categoryFilter');
+    const locationFilter = document.getElementById('locationFilter');
+
+    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+    locationFilter.innerHTML = '<option value="">All Locations</option>';
+
+    Array.from(categorySet).sort().forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+
+    Array.from(locationSet).sort().forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
+
+// Event listeners for filters
+document.getElementById('searchInput').addEventListener('input', fetchProducts);
+document.getElementById('categoryFilter').addEventListener('change', fetchProducts);
+document.getElementById('locationFilter').addEventListener('change', fetchProducts);
+
+// Initial fetch
+fetchProducts();
