@@ -1,24 +1,122 @@
-// Updated script.js
+const searchInput = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const locationFilter = document.getElementById('locationFilter');
+const productList = document.getElementById('productList');
 
-// Show loading message while fetching const resultsContainer = document.getElementById("results"); resultsContainer.innerHTML = "<p>Loading data, please wait...</p>";
+let allProducts = [];
 
-const supabaseUrl = "https://atyjvpsjlhvzpqmqyylv.supabase.co"; const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA"; const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+async function fetchProducts() {
+  try {
+    const response = await fetch('https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products?select=*', {
+      headers: {
+        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA',
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA'
+      }
+    });
+    const data = await response.json();
+    allProducts = data;
+    renderProducts(allProducts);
+    populateFilters(allProducts);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  }
+}
 
-async function fetchData() { const { data, error } = await supabase .from("products") .select("name, category, brand, store, price, location, unit, specs") .limit(10000); // Fetch 10,000 rows per call (adjustable)
+function renderProducts(products) {
+  productList.innerHTML = '';
+  const grouped = {};
 
-if (error) { resultsContainer.innerHTML = <p style="color:red;">Error fetching data: ${error.message}</p>; return; }
+  products.forEach(product => {
+    if (!grouped[product.category]) {
+      grouped[product.category] = [];
+    }
+    grouped[product.category].push(product);
+  });
 
-if (data.length === 0) { resultsContainer.innerHTML = "<p>No data available.</p>"; return; }
+  for (const [category, items] of Object.entries(grouped)) {
+    const section = document.createElement('div');
+    section.className = 'category-section';
 
-renderData(data); }
+    const heading = document.createElement('h2');
+    heading.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    section.appendChild(heading);
 
-function renderData(products) { const grouped = {};
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>Name</th>
+        <th>Brand</th>
+        <th>Store</th>
+        <th>Location</th>
+        <th>Unit</th>
+        <th>Specs</th>
+        <th>Price</th>
+      </tr>
+    `;
+    table.appendChild(thead);
 
-for (const item of products) { const key = item.category || "Others"; if (!grouped[key]) grouped[key] = []; grouped[key].push(item); }
+    const tbody = document.createElement('tbody');
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${item.name}</td>
+        <td>${item.brand}</td>
+        <td>${item.store}</td>
+        <td>${item.location}</td>
+        <td>${item.unit}</td>
+        <td>${item.specs || ''}</td>
+        <td>₱${parseFloat(item.price).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
 
-resultsContainer.innerHTML = "";
+    table.appendChild(tbody);
+    section.appendChild(table);
+    productList.appendChild(section);
+  }
+}
 
-for (const category in grouped) { const section = document.createElement("div"); section.classList.add("category-block"); section.innerHTML = <h2>${category.charAt(0).toUpperCase() + category.slice(1)}</h2> <table> <thead> <tr><th>Brand</th><th>Store</th><th>Price</th><th>Unit</th><th>Specs</th></tr> </thead> <tbody> ${grouped[category].map(p => <tr> <td>${p.brand || "-"}</td> <td>${p.store || "-"}</td> <td>₱${Number(p.price).toLocaleString()}</td> <td>${p.unit || "-"}</td> <td>${p.specs || "-"}</td> </tr> ).join('')} </tbody> </table> ; resultsContainer.appendChild(section); } }
+function populateFilters(products) {
+  const categories = [...new Set(products.map(p => p.category))];
+  const locations = [...new Set(products.map(p => p.location))];
 
-document.addEventListener("DOMContentLoaded", fetchData);
+  categoryFilter.innerHTML = '<option value="">All Categories</option>';
+  locationFilter.innerHTML = '<option value="">All Locations</option>';
 
+  categories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    categoryFilter.appendChild(option);
+  });
+
+  locations.forEach(loc => {
+    const option = document.createElement('option');
+    option.value = loc;
+    option.textContent = loc;
+    locationFilter.appendChild(option);
+  });
+}
+
+function filterProducts() {
+  const search = searchInput.value.toLowerCase();
+  const category = categoryFilter.value;
+  const location = locationFilter.value;
+
+  const filtered = allProducts.filter(p =>
+    (p.name.toLowerCase().includes(search) ||
+     p.brand.toLowerCase().includes(search) ||
+     p.store.toLowerCase().includes(search)) &&
+    (category ? p.category === category : true) &&
+    (location ? p.location === location : true)
+  );
+
+  renderProducts(filtered);
+}
+
+searchInput.addEventListener('input', filterProducts);
+categoryFilter.addEventListener('change', filterProducts);
+locationFilter.addEventListener('change', filterProducts);
+
+fetchProducts();
