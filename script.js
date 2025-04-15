@@ -1,94 +1,120 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+// Replace with your own Supabase credentials
+const SUPABASE_URL = "https://atyjvpsjlhvzpqmqyylv.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA";
 
-const supabaseUrl = 'https://atyjvpsjlhvzpqmqyylv.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA'
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const categoryFilter = document.getElementById("categoryFilter")
-const locationFilter = document.getElementById("locationFilter")
-const searchInput = document.getElementById("searchInput")
-const productList = document.getElementById("productList")
-
-let products = []
+const searchInput = document.getElementById("searchInput");
+const categoryFilter = document.getElementById("categoryFilter");
+const locationFilter = document.getElementById("locationFilter");
+const productContainer = document.getElementById("productContainer");
 
 async function fetchProducts() {
-  const { data, error } = await supabase.from('products').select('*')
+  const { data, error } = await supabase.from("products").select("*");
   if (error) {
-    console.error("Error loading data:", error)
-    return
+    console.error("Supabase fetch error:", error.message);
+    return [];
   }
-  products = data
-  populateFilters()
-  renderProducts()
+  return data;
 }
 
-function populateFilters() {
-  const categories = [...new Set(products.map(p => p.category))].sort()
-  const locations = [...new Set(products.map(p => p.location))].sort()
+function getUniqueValues(data, key) {
+  return [...new Set(data.map(item => item[key]).filter(Boolean))];
+}
 
+function renderFilters(products) {
+  const categories = getUniqueValues(products, "category");
+  const locations = getUniqueValues(products, "location");
+
+  categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
   categories.forEach(cat => {
-    const option = document.createElement("option")
-    option.value = cat
-    option.textContent = cat
-    categoryFilter.appendChild(option)
-  })
+    categoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
+  });
 
+  locationFilter.innerHTML = `<option value="all">All Locations</option>`;
   locations.forEach(loc => {
-    const option = document.createElement("option")
-    option.value = loc
-    option.textContent = loc
-    locationFilter.appendChild(option)
-  })
+    locationFilter.innerHTML += `<option value="${loc}">${loc}</option>`;
+  });
 }
 
-function renderProducts() {
-  const searchQuery = searchInput.value.toLowerCase()
-  const category = categoryFilter.value
-  const location = locationFilter.value
+function renderProducts(products) {
+  const searchQuery = searchInput.value.toLowerCase();
+  const selectedCategory = categoryFilter.value;
+  const selectedLocation = locationFilter.value;
 
-  productList.innerHTML = ""
+  const filtered = products.filter(p => {
+    const matchesSearch =
+      p.name?.toLowerCase().includes(searchQuery) ||
+      p.brand?.toLowerCase().includes(searchQuery) ||
+      p.store?.toLowerCase().includes(searchQuery);
 
-  const grouped = {}
+    const matchesCategory =
+      selectedCategory === "all" || p.category === selectedCategory;
 
-  products.forEach(p => {
-    if (
-      (category === "all" || p.category === category) &&
-      (location === "all" || p.location === location) &&
-      (p.brand.toLowerCase().includes(searchQuery) || p.store.toLowerCase().includes(searchQuery))
-    ) {
-      if (!grouped[p.name]) grouped[p.name] = []
-      grouped[p.name].push(p)
-    }
-  })
+    const matchesLocation =
+      selectedLocation === "all" || p.location === selectedLocation;
+
+    return matchesSearch && matchesCategory && matchesLocation;
+  });
+
+  productContainer.innerHTML = "";
+
+  if (filtered.length === 0) {
+    productContainer.innerHTML = `<p>No results found.</p>`;
+    return;
+  }
+
+  const grouped = {};
+
+  filtered.forEach(item => {
+    if (!grouped[item.name]) grouped[item.name] = [];
+    grouped[item.name].push(item);
+  });
 
   Object.entries(grouped).forEach(([name, items]) => {
-    const card = document.createElement("div")
-    card.className = "product-card"
+    const lowest = Math.min(...items.map(i => i.price || 0));
 
-    const header = document.createElement("h2")
-    header.textContent = name
-    card.appendChild(header)
-
-    const table = document.createElement("table")
-    table.innerHTML = `
-      <thead><tr><th>Brand</th><th>Store</th><th>Price</th></tr></thead>
-      <tbody>
-        ${items.map(i => `
+    const tableHTML = `
+      <table>
+        <thead>
           <tr>
-            <td>${i.brand}</td>
-            <td>${i.store}</td>
-            <td class="${i.price === Math.min(...items.map(p => p.price)) ? 'lowest-price' : ''}">₱${i.price.toFixed(2)}</td>
+            <th>Brand</th>
+            <th>Store</th>
+            <th>Price</th>
+            <th>Unit</th>
+            <th>Specs</th>
+            <th>Location</th>
           </tr>
-        `).join("")}
-      </tbody>
-    `
-    card.appendChild(table)
-    productList.appendChild(card)
-  })
+        </thead>
+        <tbody>
+          ${items.map(item => `
+            <tr>
+              <td>${item.brand || ""}</td>
+              <td>${item.store || ""}</td>
+              <td class="${item.price === lowest ? "lowest-price" : ""}">₱${item.price?.toFixed(2) || ""}</td>
+              <td>${item.unit || ""}</td>
+              <td>${item.specs || ""}</td>
+              <td>${item.location || ""}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    `;
+
+    const section = document.createElement("section");
+    section.innerHTML = `<h2>${name}</h2>` + tableHTML;
+    productContainer.appendChild(section);
+  });
 }
 
-searchInput.addEventListener("input", renderProducts)
-categoryFilter.addEventListener("change", renderProducts)
-locationFilter.addEventListener("change", renderProducts)
+async function initialize() {
+  const products = await fetchProducts();
+  renderFilters(products);
 
-fetchProducts()
+  searchInput.addEventListener("input", () => renderProducts(products));
+  categoryFilter.addEventListener("change", () => renderProducts(products));
+  locationFilter.addEventListener("change", () => renderProducts(products));
+
+  renderProducts(products);
+}
+
+initialize();
