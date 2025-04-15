@@ -1,47 +1,37 @@
-const searchInput = document.getElementById('searchInput');
-const categoryFilter = document.getElementById('categoryFilter');
-const locationFilter = document.getElementById('locationFilter');
-const productList = document.getElementById('productList');
-
-let allProducts = [];
-
-async function fetchProducts() {
-  try {
-    const response = await fetch('https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products?select=*', {
-      headers: {
-        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA'
-      }
-    });
-    const data = await response.json();
-    allProducts = data;
-    renderProducts(allProducts);
-    populateFilters(allProducts);
-  } catch (error) {
-    console.error('Error fetching products:', error);
-  }
+async function fetchData() {
+  const response = await fetch('https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products?select=*', {
+    headers: {
+      apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA'
+    }
+  });
+  const data = await response.json();
+  return data;
 }
 
-function renderProducts(products) {
-  productList.innerHTML = '';
+function groupData(data, groupBy) {
   const grouped = {};
-
-  products.forEach(product => {
-    if (!grouped[product.category]) {
-      grouped[product.category] = [];
+  data.forEach(item => {
+    const group = item[groupBy] || 'Others';
+    if (!grouped[group]) {
+      grouped[group] = [];
     }
-    grouped[product.category].push(product);
+    grouped[group].push(item);
   });
+  return grouped;
+}
 
-  for (const [category, items] of Object.entries(grouped)) {
-    const section = document.createElement('div');
-    section.className = 'category-section';
+function renderData(groupedData) {
+  const container = document.getElementById('data-container');
+  container.innerHTML = '';
 
-    const heading = document.createElement('h2');
-    heading.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-    section.appendChild(heading);
+  for (const group in groupedData) {
+    const groupTitle = document.createElement('h2');
+    groupTitle.textContent = group;
+    groupTitle.classList.add('category-title');
 
     const table = document.createElement('table');
+    table.classList.add('price-table');
+
     const thead = document.createElement('thead');
     thead.innerHTML = `
       <tr>
@@ -57,66 +47,82 @@ function renderProducts(products) {
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    items.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${item.name}</td>
-        <td>${item.brand}</td>
-        <td>${item.store}</td>
-        <td>${item.location}</td>
-        <td>${item.unit}</td>
+    const groupItems = groupedData[group];
+
+    const prices = groupItems.map(item => parseFloat(item.price)).filter(p => !isNaN(p));
+    const minPrice = Math.min(...prices);
+
+    groupItems.forEach(item => {
+      const row = document.createElement('tr');
+      const price = parseFloat(item.price);
+      const isMinPrice = price === minPrice;
+
+      row.innerHTML = `
+        <td>${item.name || ''}</td>
+        <td>${item.brand || ''}</td>
+        <td>${item.store || ''}</td>
+        <td>${item.location || ''}</td>
+        <td>${item.unit || ''}</td>
         <td>${item.specs || ''}</td>
-        <td>₱${parseFloat(item.price).toLocaleString()}</td>
+        <td class="${isMinPrice ? 'highlight' : ''}">₱${price.toLocaleString()}</td>
       `;
-      tbody.appendChild(tr);
+      tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
-    section.appendChild(table);
-    productList.appendChild(section);
+    container.appendChild(groupTitle);
+    container.appendChild(table);
   }
 }
 
-function populateFilters(products) {
-  const categories = [...new Set(products.map(p => p.category))];
-  const locations = [...new Set(products.map(p => p.location))];
+function setupFilters(data) {
+  const categorySelect = document.getElementById('category');
+  const locationSelect = document.getElementById('location');
+  const searchInput = document.getElementById('search');
 
-  categoryFilter.innerHTML = '<option value="">All Categories</option>';
-  locationFilter.innerHTML = '<option value="">All Locations</option>';
+  const categories = [...new Set(data.map(item => item.category).filter(Boolean))];
+  const locations = [...new Set(data.map(item => item.location).filter(Boolean))];
 
   categories.forEach(cat => {
     const option = document.createElement('option');
     option.value = cat;
     option.textContent = cat;
-    categoryFilter.appendChild(option);
+    categorySelect.appendChild(option);
   });
 
   locations.forEach(loc => {
     const option = document.createElement('option');
     option.value = loc;
     option.textContent = loc;
-    locationFilter.appendChild(option);
+    locationSelect.appendChild(option);
   });
+
+  function applyFilters() {
+    const selectedCategory = categorySelect.value;
+    const selectedLocation = locationSelect.value;
+    const searchText = searchInput.value.toLowerCase();
+
+    const filtered = data.filter(item => {
+      const matchCategory = selectedCategory ? item.category === selectedCategory : true;
+      const matchLocation = selectedLocation ? item.location === selectedLocation : true;
+      const matchSearch = item.name?.toLowerCase().includes(searchText) || item.brand?.toLowerCase().includes(searchText) || item.store?.toLowerCase().includes(searchText);
+      return matchCategory && matchLocation && matchSearch;
+    });
+
+    const grouped = groupData(filtered, 'category');
+    renderData(grouped);
+  }
+
+  categorySelect.addEventListener('change', applyFilters);
+  locationSelect.addEventListener('change', applyFilters);
+  searchInput.addEventListener('input', applyFilters);
+
+  applyFilters();
 }
 
-function filterProducts() {
-  const search = searchInput.value.toLowerCase();
-  const category = categoryFilter.value;
-  const location = locationFilter.value;
-
-  const filtered = allProducts.filter(p =>
-    (p.name.toLowerCase().includes(search) ||
-     p.brand.toLowerCase().includes(search) ||
-     p.store.toLowerCase().includes(search)) &&
-    (category ? p.category === category : true) &&
-    (location ? p.location === location : true)
-  );
-
-  renderProducts(filtered);
-}
-
-searchInput.addEventListener('input', filterProducts);
-categoryFilter.addEventListener('change', filterProducts);
-locationFilter.addEventListener('change', filterProducts);
-
-fetchProducts();
+window.onload = async () => {
+  const data = await fetchData();
+  const grouped = groupData(data, 'category');
+  renderData(grouped);
+  setupFilters(data);
+};
