@@ -77,8 +77,6 @@ function displayProducts(products) {
 
     const tbody = table.querySelector('tbody');
 
-    const minPrice = Math.min(...grouped[category].map(p => parseFloat(p.price) || 0));
-
     grouped[category].forEach(item => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -88,7 +86,7 @@ function displayProducts(products) {
         <td>${item.location}</td>
         <td>${item.unit || ''}</td>
         <td>${item.specs || ''}</td>
-        <td class="${parseFloat(item.price) === minPrice ? 'price-green' : ''}">₱${item.price}</td>
+        <td>₱${item.price}</td>
       `;
       tbody.appendChild(row);
     });
