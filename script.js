@@ -1,89 +1,24 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const searchInput = document.getElementById("searchInput");
-  const categoryFilter = document.getElementById("categoryFilter");
-  const locationFilter = document.getElementById("locationFilter");
-  const productContainer = document.getElementById("productContainer");
+// Updated script.js
 
-  let products = [];
+// Show loading message while fetching const resultsContainer = document.getElementById("results"); resultsContainer.innerHTML = "<p>Loading data, please wait...</p>";
 
-  async function fetchProducts() {
-    const res = await fetch("https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products?select=*", {
-      headers: {
-        apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA"
-      }
-    });
-    products = await res.json();
-    updateFilters();
-    renderProducts();
-  }
+const supabaseUrl = "https://atyjvpsjlhvzpqmqyylv.supabase.co"; const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA"; const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  function updateFilters() {
-    const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
-    const locations = [...new Set(products.map(p => p.location))].filter(Boolean);
+async function fetchData() { const { data, error } = await supabase .from("products") .select("name, category, brand, store, price, location, unit, specs") .limit(10000); // Fetch 10,000 rows per call (adjustable)
 
-    categoryFilter.innerHTML = `<option value="">All Categories</option>` + categories.map(cat => `<option value="${cat}">${cat}</option>`).join("");
-    locationFilter.innerHTML = `<option value="">All Locations</option>` + locations.map(loc => `<option value="${loc}">${loc}</option>`).join("");
-  }
+if (error) { resultsContainer.innerHTML = <p style="color:red;">Error fetching data: ${error.message}</p>; return; }
 
-  function renderProducts() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const selectedCategory = categoryFilter.value;
-    const selectedLocation = locationFilter.value;
+if (data.length === 0) { resultsContainer.innerHTML = "<p>No data available.</p>"; return; }
 
-    const grouped = {};
+renderData(data); }
 
-    products.forEach(p => {
-      const matchesSearch = p.name?.toLowerCase().includes(searchTerm) || p.brand?.toLowerCase().includes(searchTerm) || p.store?.toLowerCase().includes(searchTerm);
-      const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      const matchesLocation = !selectedLocation || p.location === selectedLocation;
+function renderData(products) { const grouped = {};
 
-      if (matchesSearch && matchesCategory && matchesLocation) {
-        if (!grouped[p.category]) grouped[p.category] = [];
-        grouped[p.category].push(p);
-      }
-    });
+for (const item of products) { const key = item.category || "Others"; if (!grouped[key]) grouped[key] = []; grouped[key].push(item); }
 
-    productContainer.innerHTML = "";
+resultsContainer.innerHTML = "";
 
-    for (const [category, items] of Object.entries(grouped)) {
-      const section = document.createElement("div");
-      section.className = "product-section";
-      section.innerHTML = `<div class="category-title">${category}</div>`;
-      const table = document.createElement("table");
+for (const category in grouped) { const section = document.createElement("div"); section.classList.add("category-block"); section.innerHTML = <h2>${category.charAt(0).toUpperCase() + category.slice(1)}</h2> <table> <thead> <tr><th>Brand</th><th>Store</th><th>Price</th><th>Unit</th><th>Specs</th></tr> </thead> <tbody> ${grouped[category].map(p => <tr> <td>${p.brand || "-"}</td> <td>${p.store || "-"}</td> <td>₱${Number(p.price).toLocaleString()}</td> <td>${p.unit || "-"}</td> <td>${p.specs || "-"}</td> </tr> ).join('')} </tbody> </table> ; resultsContainer.appendChild(section); } }
 
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Brand</th>
-            <th>Store</th>
-            <th>Price</th>
-            <th>Unit</th>
-            <th>Specs</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${items.map(p => `
-            <tr>
-              <td>${p.name}</td>
-              <td>${p.brand || ""}</td>
-              <td>${p.store || ""}</td>
-              <td class="${p.price && parseFloat(p.price) === Math.min(...items.map(i => parseFloat(i.price))) ? 'price-green' : ''}">₱${parseFloat(p.price).toLocaleString()}</td>
-              <td>${p.unit || ""}</td>
-              <td>${p.specs || ""}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      `;
+document.addEventListener("DOMContentLoaded", fetchData);
 
-      section.appendChild(table);
-      productContainer.appendChild(section);
-    }
-  }
-
-  searchInput.addEventListener("input", renderProducts);
-  categoryFilter.addEventListener("change", renderProducts);
-  locationFilter.addEventListener("change", renderProducts);
-
-  fetchProducts();
-});
