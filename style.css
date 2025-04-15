@@ -1,71 +1,74 @@
-/* style.css */
 body {
   font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
   margin: 0;
-  padding: 20px;
-  background-color: #f9f9f9;
-  color: #333;
-}
-
-header {
+  padding: 0;
   text-align: center;
-  margin-bottom: 20px;
 }
 
 h1 {
-  font-size: 2.5rem;
-  color: #0070f3;
-  margin: 0;
+  color: #007bff;
+  margin-top: 40px;
+  font-size: 2.5em;
 }
 
 .tagline {
-  font-size: 1.2rem;
+  font-size: 1.2em;
   color: #555;
-  margin-top: 8px;
+  margin-top: 10px;
+  margin-bottom: 30px;
 }
 
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.filters input,
-.filters select {
+input[type="text"],
+select {
   padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
+  margin: 10px;
+  font-size: 1em;
+  width: 80%;
+  max-width: 400px;
   border-radius: 6px;
-  min-width: 220px;
+  border: 1px solid #ccc;
+  background-color: #f1f4f3;
+}
+
+.product-section {
+  margin-top: 30px;
+  padding: 0 15px;
+}
+
+.category-title {
+  font-size: 1.3em;
+  font-weight: bold;
+  margin-top: 30px;
+  color: #333;
+  text-align: left;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 table {
-  width: 100%;
+  margin: 15px auto;
   border-collapse: collapse;
-  margin-top: 20px;
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
+  width: 90%;
+  max-width: 900px;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 th, td {
-  padding: 12px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 0.95em;
   text-align: left;
-  border-bottom: 1px solid #eee;
 }
 
 th {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: #007bff;
+  color: white;
 }
 
-td {
-  font-size: 0.95rem;
-}
-
-.lowest-price {
-  color: #0070f3;
+td.price-green {
+  color: green;
   font-weight: bold;
 }
