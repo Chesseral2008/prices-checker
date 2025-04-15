@@ -1,26 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Prices Checker</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-</head>
-<body>
-  <header>
+</head><body>
+  <div class="container">
     <h1>Prices Checker</h1>
     <p class="tagline">Checks and Compares Prices of Everything — Get the Best and Cheapest Price!</p>
-  </header>
+    <input type="text" id="searchBar" placeholder="Search brand, store, or product." /><select id="categoryFilter">
+  <option value="">All Categories</option>
+</select>
 
-  <div class="filters">
-    <input type="text" id="searchInput" placeholder="Search brand, store, or product..." />
-    <select id="categoryFilter"></select>
-    <select id="locationFilter"></select>
-  </div>
+<select id="locationFilter">
+  <option value="">All Locations</option>
+</select>
 
-  <main id="productContainer"></main>
+<div id="results"></div>
 
-  <script src="script.js"></script>
-</body>
-</html>
+  </div>  <script src="script.js"></script></body></html>
