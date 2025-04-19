@@ -1,112 +1,92 @@
-// Fetch data from Supabase
-const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+async function fetchProducts() {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*', { count: 'exact' })
+    .range(0, 999999);  // Adjusts for large datasets
 
-const categoryFilter = document.getElementById('categoryFilter');
-const locationFilter = document.getElementById('locationFilter');
-const searchInput = document.getElementById('searchInput');
-const resultsContainer = document.getElementById('resultsContainer');
+  if (error) {
+    console.error("Error fetching products:", error);
+    return;
+  }
 
-let allData = [];
-
-async function fetchData() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
-    }
-  });
-  const data = await res.json();
-  allData = data;
-  populateFilters();
-  renderResults();
+  if (data && Array.isArray(data)) {
+    renderProducts(data);
+  }
 }
 
-function populateFilters() {
-  const categories = Array.from(new Set(allData.map(item => item.category))).sort();
-  const locations = Array.from(new Set(allData.map(item => item.location))).sort();
+function renderProducts(products) {
+  const productList = document.getElementById("productList");
+  const categoryFilter = document.getElementById("categoryFilter");
+  const locationFilter = document.getElementById("locationFilter");
+  const searchInput = document.getElementById("searchInput").value.toLowerCase();
 
-  categoryFilter.innerHTML = '<option value="All">All Categories</option>';
-  locationFilter.innerHTML = '<option value="All">All Locations</option>';
-
-  categories.forEach(category => {
-    const opt = document.createElement("option");
-    opt.value = category;
-    opt.textContent = category;
-    categoryFilter.appendChild(opt);
-  });
-
-  locations.forEach(location => {
-    const opt = document.createElement("option");
-    opt.value = location;
-    opt.textContent = location;
-    locationFilter.appendChild(opt);
-  });
-}
-
-function renderResults() {
-  const categoryValue = categoryFilter.value;
-  const locationValue = locationFilter.value;
-  const searchValue = searchInput.value.toLowerCase();
+  productList.innerHTML = "";
 
   const grouped = {};
 
-  allData.forEach(item => {
-    const key = item.name;
+  products.forEach(item => {
+    if (!item.name || !item.brand || !item.store || !item.price) return;
+
     if (
-      (categoryValue === "All" || item.category === categoryValue) &&
-      (locationValue === "All" || item.location === locationValue) &&
-      (item.name?.toLowerCase().includes(searchValue) ||
-       item.brand?.toLowerCase().includes(searchValue) ||
-       item.store?.toLowerCase().includes(searchValue))
+      (categoryFilter.value !== "all" && item.category !== categoryFilter.value) ||
+      (locationFilter.value !== "all" && item.location !== locationFilter.value)
     ) {
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(item);
+      return;
     }
+
+    if (
+      !item.brand.toLowerCase().includes(searchInput) &&
+      !item.store.toLowerCase().includes(searchInput)
+    ) {
+      return;
+    }
+
+    if (!grouped[item.name]) grouped[item.name] = [];
+    grouped[item.name].push(item);
   });
 
-  resultsContainer.innerHTML = "";
+  for (const [name, items] of Object.entries(grouped)) {
+    const productCard = document.createElement("div");
+    productCard.className = "product-card";
 
-  Object.keys(grouped).forEach(name => {
-    const productItems = grouped[name];
-    const minPrice = Math.min(...productItems.map(p => p.price));
+    const header = document.createElement("h2");
+    header.textContent = name;
+    productCard.appendChild(header);
 
     const table = document.createElement("table");
-    const header = `
+    table.innerHTML = `
       <thead>
-        <tr><th colspan="7" style="text-align:left; font-size:18px;">${name}</th></tr>
         <tr>
           <th>Brand</th>
           <th>Store</th>
           <th>Location</th>
-          <th>Specs</th>
           <th>Unit</th>
+          <th>Specs</th>
           <th>Price</th>
         </tr>
       </thead>
+      <tbody>
+        ${items.map(i => `
+          <tr>
+            <td>${i.brand}</td>
+            <td>${i.store}</td>
+            <td>${i.location}</td>
+            <td>${i.unit || ""}</td>
+            <td>${i.specs || ""}</td>
+            <td class="${i.price === Math.min(...items.map(p => p.price)) ? 'lowest-price' : ''}">
+              ₱${parseFloat(i.price).toFixed(2)}
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
     `;
-
-    const rows = productItems.map(item => {
-      const isLowest = item.price === minPrice ? "lowest-price" : "";
-      return `
-        <tr>
-          <td>${item.brand || ""}</td>
-          <td>${item.store || ""}</td>
-          <td>${item.location || ""}</td>
-          <td>${item.specs || ""}</td>
-          <td>${item.unit || ""}</td>
-          <td class="${isLowest}">₱${item.price?.toFixed(2) || ""}</td>
-        </tr>
-      `;
-    }).join("");
-
-    table.innerHTML = header + "<tbody>" + rows + "</tbody>";
-    resultsContainer.appendChild(table);
-  });
+    productCard.appendChild(table);
+    productList.appendChild(productCard);
+  }
 }
 
-searchInput.addEventListener("input", renderResults);
-categoryFilter.addEventListener("change", renderResults);
-locationFilter.addEventListener("change", renderResults);
+document.getElementById("searchInput").addEventListener("input", fetchProducts);
+document.getElementById("categoryFilter").addEventListener("change", fetchProducts);
+document.getElementById("locationFilter").addEventListener("change", fetchProducts);
 
-fetchData();
+fetchProducts();
