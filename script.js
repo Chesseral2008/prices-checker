@@ -1,4 +1,3 @@
-// Fetch data from Supabase
 const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
 
@@ -17,9 +16,19 @@ async function fetchData() {
     }
   });
   const data = await res.json();
-  allData = data;
+  allData = removeDuplicates(data);
   populateFilters();
   renderResults();
+}
+
+function removeDuplicates(data) {
+  const seen = new Set();
+  return data.filter(item => {
+    const key = `${item.name}|${item.brand}|${item.store}|${item.location}|${item.specs}|${item.unit}|${item.price}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function populateFilters() {
