@@ -16,9 +16,19 @@ async function fetchData() {
     }
   });
   const data = await res.json();
-  allData = data;
+  allData = removeDuplicates(data);
   populateFilters();
   renderResults();
+}
+
+function removeDuplicates(data) {
+  const seen = new Set();
+  return data.filter(item => {
+    const key = `${item.name}|${item.brand}|${item.store}|${item.location}|${item.specs}|${item.unit}|${item.price}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function populateFilters() {
@@ -51,14 +61,14 @@ function renderResults() {
   const grouped = {};
 
   allData.forEach(item => {
-    const matchCategory = categoryValue === "All" || item.category === categoryValue;
-    const matchLocation = locationValue === "All" || item.location === locationValue;
-    const matchSearch = [item.name, item.brand, item.store].some(
-      field => field?.toLowerCase().includes(searchValue)
-    );
-
-    if (matchCategory && matchLocation && matchSearch) {
-      const key = `${item.name} | ${item.brand} | ${item.specs}`; // composite key
+    const key = `${item.name} | ${item.brand} | ${item.specs}`;
+    if (
+      (categoryValue === "All" || item.category === categoryValue) &&
+      (locationValue === "All" || item.location === locationValue) &&
+      (item.name?.toLowerCase().includes(searchValue) ||
+       item.brand?.toLowerCase().includes(searchValue) ||
+       item.store?.toLowerCase().includes(searchValue))
+    ) {
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     }
@@ -68,13 +78,12 @@ function renderResults() {
 
   Object.keys(grouped).forEach(key => {
     const productItems = grouped[key];
-    const [name, brand, specs] = key.split(" | ");
     const minPrice = Math.min(...productItems.map(p => p.price));
 
     const table = document.createElement("table");
     const header = `
       <thead>
-        <tr><th colspan="7" style="text-align:left; font-size:18px;">${name}</th></tr>
+        <tr><th colspan="6" style="text-align:left; font-size:18px;">${key}</th></tr>
         <tr>
           <th>Brand</th>
           <th>Store</th>
