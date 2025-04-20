@@ -1,5 +1,5 @@
 const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+const SUPABASE_KEY = 'eyJhbGciOiJI...<your_full_key_here>';
 
 const categoryFilter = document.getElementById('categoryFilter');
 const locationFilter = document.getElementById('locationFilter');
@@ -68,36 +68,47 @@ function renderResults() {
     )
   );
 
+  const grouped = {};
+  filtered.forEach(item => {
+    if (!grouped[item.name]) grouped[item.name] = [];
+    grouped[item.name].push(item);
+  });
+
   resultsContainer.innerHTML = "";
 
-  const table = document.createElement("table");
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Brand</th>
-        <th>Store</th>
-        <th>Location</th>
-        <th>Specs</th>
-        <th>Unit</th>
-        <th>Price</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${filtered.map(item => `
+  Object.entries(grouped).forEach(([name, items]) => {
+    const minPrice = Math.min(...items.map(i => i.price));
+
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead>
         <tr>
-          <td>${item.name || ""}</td>
-          <td>${item.brand || ""}</td>
-          <td>${item.store || ""}</td>
-          <td>${item.location || ""}</td>
-          <td>${item.specs || ""}</td>
-          <td>${item.unit || ""}</td>
-          <td class="lowest-price">₱${item.price?.toFixed(2) || ""}</td>
+          <th>Name</th>
+          <th>Brand</th>
+          <th>Store</th>
+          <th>Location</th>
+          <th>Specs</th>
+          <th>Unit</th>
+          <th>Price</th>
         </tr>
-      `).join("")}
-    </tbody>
-  `;
-  resultsContainer.appendChild(table);
+      </thead>
+      <tbody>
+        ${items.map(item => `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.brand}</td>
+            <td>${item.store}</td>
+            <td>${item.location}</td>
+            <td>${item.specs}</td>
+            <td>${item.unit}</td>
+            <td class="${item.price === minPrice ? 'lowest-price' : ''}">
+              ₱${item.price.toFixed(2)}
+            </td>
+          </tr>`).join("")}
+      </tbody>
+    `;
+    resultsContainer.appendChild(table);
+  });
 }
 
 searchInput.addEventListener("input", renderResults);
