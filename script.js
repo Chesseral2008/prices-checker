@@ -1,5 +1,5 @@
 const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 
 const categoryFilter = document.getElementById('categoryFilter');
 const locationFilter = document.getElementById('locationFilter');
@@ -68,6 +68,15 @@ function renderResults() {
     )
   );
 
+  // Find lowest prices per name
+  const lowestPriceMap = {};
+  filtered.forEach(item => {
+    const key = item.name;
+    if (!lowestPriceMap[key] || item.price < lowestPriceMap[key]) {
+      lowestPriceMap[key] = item.price;
+    }
+  });
+
   resultsContainer.innerHTML = "";
 
   const table = document.createElement("table");
@@ -84,17 +93,20 @@ function renderResults() {
       </tr>
     </thead>
     <tbody>
-      ${filtered.map(item => `
-        <tr>
-          <td>${item.name || ""}</td>
-          <td>${item.brand || ""}</td>
-          <td>${item.store || ""}</td>
-          <td>${item.location || ""}</td>
-          <td>${item.specs || ""}</td>
-          <td>${item.unit || ""}</td>
-          <td class="lowest-price">₱${item.price?.toFixed(2) || ""}</td>
-        </tr>
-      `).join("")}
+      ${filtered.map(item => {
+        const isLowest = item.price === lowestPriceMap[item.name];
+        return `
+          <tr>
+            <td>${item.name || ""}</td>
+            <td>${item.brand || ""}</td>
+            <td>${item.store || ""}</td>
+            <td>${item.location || ""}</td>
+            <td>${item.specs || ""}</td>
+            <td>${item.unit || ""}</td>
+            <td class="${isLowest ? 'lowest-price' : ''}">₱${item.price?.toFixed(2) || ""}</td>
+          </tr>
+        `;
+      }).join("")}
     </tbody>
   `;
   resultsContainer.appendChild(table);
