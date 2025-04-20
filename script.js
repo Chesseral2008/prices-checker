@@ -58,60 +58,46 @@ function renderResults() {
   const locationValue = locationFilter.value;
   const searchValue = searchInput.value.toLowerCase();
 
-  const grouped = {};
-
-  allData.forEach(item => {
-    if (
-      (categoryValue === "All" || item.category === categoryValue) &&
-      (locationValue === "All" || item.location === locationValue) &&
-      (item.name?.toLowerCase().includes(searchValue) ||
-       item.brand?.toLowerCase().includes(searchValue) ||
-       item.store?.toLowerCase().includes(searchValue))
-    ) {
-      const key = item.name;
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(item);
-    }
-  });
+  const filtered = allData.filter(item =>
+    (categoryValue === "All" || item.category === categoryValue) &&
+    (locationValue === "All" || item.location === locationValue) &&
+    (
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.brand?.toLowerCase().includes(searchValue) ||
+      item.store?.toLowerCase().includes(searchValue)
+    )
+  );
 
   resultsContainer.innerHTML = "";
 
-  Object.keys(grouped).forEach(name => {
-    const productItems = grouped[name];
-    const minPrice = Math.min(...productItems.map(p => p.price));
-
-    const table = document.createElement("table");
-    const header = `
-      <thead>
-        <tr><th colspan="6" style="text-align:left; font-size:18px;">${name}</th></tr>
+  const table = document.createElement("table");
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Brand</th>
+        <th>Store</th>
+        <th>Location</th>
+        <th>Specs</th>
+        <th>Unit</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filtered.map(item => `
         <tr>
-          <th>Brand</th>
-          <th>Store</th>
-          <th>Location</th>
-          <th>Specs</th>
-          <th>Unit</th>
-          <th>Price</th>
-        </tr>
-      </thead>
-    `;
-
-    const rows = productItems.map(item => {
-      const isLowest = item.price === minPrice ? "lowest-price" : "";
-      return `
-        <tr>
+          <td>${item.name || ""}</td>
           <td>${item.brand || ""}</td>
           <td>${item.store || ""}</td>
           <td>${item.location || ""}</td>
           <td>${item.specs || ""}</td>
           <td>${item.unit || ""}</td>
-          <td class="${isLowest}">₱${item.price?.toFixed(2) || ""}</td>
+          <td class="lowest-price">₱${item.price?.toFixed(2) || ""}</td>
         </tr>
-      `;
-    }).join("");
-
-    table.innerHTML = header + "<tbody>" + rows + "</tbody>";
-    resultsContainer.appendChild(table);
-  });
+      `).join("")}
+    </tbody>
+  `;
+  resultsContainer.appendChild(table);
 }
 
 searchInput.addEventListener("input", renderResults);
