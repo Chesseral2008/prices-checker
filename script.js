@@ -68,13 +68,6 @@ function renderResults() {
     )
   );
 
-  // Group by item.name
-  const grouped = {};
-  filtered.forEach(item => {
-    if (!grouped[item.name]) grouped[item.name] = [];
-    grouped[item.name].push(item);
-  });
-
   resultsContainer.innerHTML = "";
 
   const table = document.createElement("table");
@@ -91,22 +84,17 @@ function renderResults() {
       </tr>
     </thead>
     <tbody>
-      ${Object.entries(grouped).map(([name, items]) => {
-        const minPrice = Math.min(...items.map(i => i.price));
-        return items.map((item, index) => `
-          <tr>
-            <td>${index === 0 ? name : ''}</td>
-            <td>${item.brand}</td>
-            <td>${item.store}</td>
-            <td>${item.location}</td>
-            <td>${item.specs}</td>
-            <td>${item.unit}</td>
-            <td class="${item.price === minPrice ? 'lowest-price' : ''}">
-              ₱${item.price.toFixed(2)}
-            </td>
-          </tr>
-        `).join('');
-      }).join('')}
+      ${filtered.map(item => `
+        <tr>
+          <td>${item.name || ""}</td>
+          <td>${item.brand || ""}</td>
+          <td>${item.store || ""}</td>
+          <td>${item.location || ""}</td>
+          <td>${item.specs || ""}</td>
+          <td>${item.unit || ""}</td>
+          <td class="lowest-price">₱${item.price?.toFixed(2) || ""}</td>
+        </tr>
+      `).join("")}
     </tbody>
   `;
   resultsContainer.appendChild(table);
