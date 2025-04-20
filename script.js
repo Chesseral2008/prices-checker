@@ -61,7 +61,6 @@ function renderResults() {
   const grouped = {};
 
   allData.forEach(item => {
-    const key = `${item.name} | ${item.brand} | ${item.specs}`;
     if (
       (categoryValue === "All" || item.category === categoryValue) &&
       (locationValue === "All" || item.location === locationValue) &&
@@ -69,6 +68,7 @@ function renderResults() {
        item.brand?.toLowerCase().includes(searchValue) ||
        item.store?.toLowerCase().includes(searchValue))
     ) {
+      const key = item.name;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     }
@@ -76,14 +76,14 @@ function renderResults() {
 
   resultsContainer.innerHTML = "";
 
-  Object.keys(grouped).forEach(key => {
-    const productItems = grouped[key];
+  Object.keys(grouped).forEach(name => {
+    const productItems = grouped[name];
     const minPrice = Math.min(...productItems.map(p => p.price));
 
     const table = document.createElement("table");
     const header = `
       <thead>
-        <tr><th colspan="6" style="text-align:left; font-size:18px;">${key}</th></tr>
+        <tr><th colspan="6" style="text-align:left; font-size:18px;">${name}</th></tr>
         <tr>
           <th>Brand</th>
           <th>Store</th>
