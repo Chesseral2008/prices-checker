@@ -16,19 +16,9 @@ async function fetchData() {
     }
   });
   const data = await res.json();
-  allData = removeDuplicates(data);
+  allData = data;
   populateFilters();
   renderResults();
-}
-
-function removeDuplicates(data) {
-  const seen = new Set();
-  return data.filter(item => {
-    const key = `${item.name}|${item.brand}|${item.store}|${item.location}|${item.specs}|${item.unit}|${item.price}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 }
 
 function populateFilters() {
@@ -61,14 +51,14 @@ function renderResults() {
   const grouped = {};
 
   allData.forEach(item => {
-    const key = item.name;
-    if (
-      (categoryValue === "All" || item.category === categoryValue) &&
-      (locationValue === "All" || item.location === locationValue) &&
-      (item.name?.toLowerCase().includes(searchValue) ||
-       item.brand?.toLowerCase().includes(searchValue) ||
-       item.store?.toLowerCase().includes(searchValue))
-    ) {
+    const matchCategory = categoryValue === "All" || item.category === categoryValue;
+    const matchLocation = locationValue === "All" || item.location === locationValue;
+    const matchSearch = [item.name, item.brand, item.store].some(
+      field => field?.toLowerCase().includes(searchValue)
+    );
+
+    if (matchCategory && matchLocation && matchSearch) {
+      const key = `${item.name} | ${item.brand} | ${item.specs}`; // composite key
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     }
@@ -76,8 +66,9 @@ function renderResults() {
 
   resultsContainer.innerHTML = "";
 
-  Object.keys(grouped).forEach(name => {
-    const productItems = grouped[name];
+  Object.keys(grouped).forEach(key => {
+    const productItems = grouped[key];
+    const [name, brand, specs] = key.split(" | ");
     const minPrice = Math.min(...productItems.map(p => p.price));
 
     const table = document.createElement("table");
