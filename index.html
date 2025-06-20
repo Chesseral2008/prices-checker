@@ -7,18 +7,20 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+  <header class="site-header">
+    <img src="logo.png" alt="Prices Checker Logo" class="logo" />
     <h1>Prices Checker</h1>
-    <p>Checks and Compares Prices of Everything — Get the Best and Cheapest Price!</p>
-    <input type="text" id="searchInput" placeholder="Search brand, store, or product." />
-    <select id="categoryFilter">
-      <option value="All">All Categories</option>
-    </select>
+  </header>
+
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Search by name or brand..." />
     <select id="locationFilter">
-      <option value="All">All Locations</option>
+      <option value="">All Locations</option>
     </select>
-    <div id="resultsContainer"></div>
   </div>
+
+  <div id="productContainer" class="product-container"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
