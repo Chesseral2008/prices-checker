@@ -1,94 +1,83 @@
-const API_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products';
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Truncated for safety. Use full anon key.
+const supabaseUrl = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+const tableName = 'products';
 
-async function fetchProducts() {
-  const res = await fetch(${API_URL}?select=*, {
+async function fetchData() {
+  const response = await fetch(${supabaseUrl}/rest/v1/${tableName}?select=*, {
     headers: {
-      apikey: API_KEY,
-      Authorization: Bearer ${API_KEY}
-    }
+      apikey: supabaseKey,
+      Authorization: Bearer ${supabaseKey},
+    },
   });
-  return res.json();
+
+  const data = await response.json();
+  displayData(data);
+  populateLocationFilter(data);
 }
 
-function getLowestPrices(products) {
-  const grouped = {};
-  for (const product of products) {
-    if (!grouped[product.name]) grouped[product.name] = [];
-    grouped[product.name].push(product);
+function displayData(data) {
+  const tableBody = document.querySelector('#productTable tbody');
+  tableBody.innerHTML = '';
+
+  const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+  const selectedLocation = document.getElementById('locationFilter').value;
+
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name?.toLowerCase().includes(searchQuery) || item.brand?.toLowerCase().includes(searchQuery);
+    const matchesLocation = selectedLocation === 'All' || item.location === selectedLocation;
+    return matchesSearch && matchesLocation;
+  });
+
+  // Find lowest price entries by group (name + unit + specs)
+  const groupMap = new Map();
+  filteredData.forEach(item => {
+    const key = ${item.name}-${item.unit}-${item.specs};
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key).push(item);
+  });
+
+  const lowestMap = new Map();
+  for (const [key, group] of groupMap.entries()) {
+    const minPrice = Math.min(...group.map(i => i.price));
+    lowestMap.set(key, minPrice);
   }
 
-  const lowestPrices = {};
-  for (const name in grouped) {
-    const items = grouped[name];
-    const min = Math.min(...items.map(p => p.price));
-    lowestPrices[name] = items.filter(p => p.price === min);
-  }
+  filteredData.forEach(item => {
+    const row = document.createElement('tr');
+    const key = ${item.name}-${item.unit}-${item.specs};
+    const isLowest = item.price === lowestMap.get(key);
 
-  return lowestPrices;
-}
-
-function displayProducts(products) {
-  const container = document.getElementById('productsContainer');
-  container.innerHTML = '';
-
-  const lowestPrices = getLowestPrices(products);
-
-  products.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'product-card';
-
-    const name = document.createElement('div');
-    name.className = 'product-name';
-    name.textContent = p.name;
-
-    const price = document.createElement('div');
-    price.className = 'product-price';
-    price.textContent = ${p.price} ${p.currency};
-
-    if (lowestPrices[p.name].some(lp => lp.store === p.store && lp.location === p.location)) {
-      price.classList.add('lowest');
-    }
-
-    const store = document.createElement('div');
-    store.textContent = ${p.store} - ${p.location};
-
-    const specs = document.createElement('div');
-    specs.textContent = p.specs;
-
-    card.append(name, price, store, specs);
-    container.appendChild(card);
+    row.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.category}</td>
+      <td>${item.brand}</td>
+      <td>${item.store}</td>
+      <td>${item.location}</td>
+      <td class="${isLowest ? 'highlight' : ''}">${item.price}</td>
+      <td>${item.currency}</td>
+      <td>${item.unit}</td>
+      <td>${item.specs}</td>
+      <td><a href="${item["Lazada Link"]}" target="_blank">Link</a></td>
+      <td><img src="${item["Image URL"]}" alt="Image" width="50"/></td>
+      <td>${item.is_verified ? '✅' : ''}</td>
+    `;
+    tableBody.appendChild(row);
   });
 }
 
-function filterAndSearch(products) {
-  const query = document.getElementById('searchInput').value.toLowerCase();
-  const location = document.getElementById('locationFilter').value;
-
-  const filtered = products.filter(p =>
-    (p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query)) &&
-    (!location || p.location === location)
-  );
-
-  displayProducts(filtered);
-}
-
-function populateLocationFilter(products) {
-  const dropdown = document.getElementById('locationFilter');
-  const locations = [...new Set(products.map(p => p.location))].sort();
+function populateLocationFilter(data) {
+  const locationFilter = document.getElementById('locationFilter');
+  const locations = [...new Set(data.map(item => item.location))];
+  locationFilter.innerHTML = '<option value="All">All Locations</option>';
   locations.forEach(loc => {
-    const opt = document.createElement('option');
-    opt.value = loc;
-    opt.textContent = loc;
-    dropdown.appendChild(opt);
+    const option = document.createElement('option');
+    option.value = loc;
+    option.textContent = loc;
+    locationFilter.appendChild(option);
   });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const products = await fetchProducts();
-  populateLocationFilter(products);
-  displayProducts(products);
+document.getElementById('searchInput').addEventListener('input', fetchData);
+document.getElementById('locationFilter').addEventListener('change', fetchData);
 
-  document.getElementById('searchInput').addEventListener('input', () => filterAndSearch(products));
-  document.getElementById('locationFilter').addEventListener('change', () => filterAndSearch(products));
-});
+fetchData();
