@@ -4,22 +4,47 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prices Checker</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Prices Checker Logo" class="logo" />
-    <h1>Prices Checker</h1>
+    <div class="logo-title">
+      <img src="logo big.png" alt="Prices Checker Logo" class="logo" />
+      <div>
+        <h1>Prices Checker</h1>
+        <p class="slogan">Checks and Compares Prices of Everything</p>
+      </div>
+    </div>
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search by name or brand..." />
+      <select id="locationFilter">
+        <option value="All">All Locations</option>
+      </select>
+    </div>
   </header>
 
   <main>
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search by name or brand..." />
-      <select id="locationFilter">
-        <option value="">All Locations</option>
-      </select>
-    </div>
-    <div id="productsContainer" class="products-grid"></div>
+    <table id="productTable">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Category</th>
+          <th>Brand</th>
+          <th>Store</th>
+          <th>Location</th>
+          <th>Price</th>
+          <th>Currency</th>
+          <th>Unit</th>
+          <th>Specs</th>
+          <th>Lazada Link</th>
+          <th>Image</th>
+          <th>Verified</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data rows will be inserted here -->
+      </tbody>
+    </table>
   </main>
 
   <script src="script.js"></script>
