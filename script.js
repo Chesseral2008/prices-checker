@@ -1,88 +1,94 @@
-const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+const API_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Truncated for safety. Use full anon key.
 
 async function fetchProducts() {
-  const response = await fetch(${SUPABASE_URL}/rest/v1/products?select=*, {
+  const res = await fetch(${API_URL}?select=*, {
     headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: Bearer ${SUPABASE_KEY}
+      apikey: API_KEY,
+      Authorization: Bearer ${API_KEY}
     }
   });
-  const data = await response.json();
-  return data;
+  return res.json();
 }
 
-function renderProducts(products) {
-  const container = document.getElementById("productContainer");
-  container.innerHTML = "";
-
+function getLowestPrices(products) {
   const grouped = {};
-  products.forEach(product => {
-    const key = product.name + product.unit + product.specs;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(product);
+  for (const product of products) {
+    if (!grouped[product.name]) grouped[product.name] = [];
+    grouped[product.name].push(product);
+  }
+
+  const lowestPrices = {};
+  for (const name in grouped) {
+    const items = grouped[name];
+    const min = Math.min(...items.map(p => p.price));
+    lowestPrices[name] = items.filter(p => p.price === min);
+  }
+
+  return lowestPrices;
+}
+
+function displayProducts(products) {
+  const container = document.getElementById('productsContainer');
+  container.innerHTML = '';
+
+  const lowestPrices = getLowestPrices(products);
+
+  products.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+
+    const name = document.createElement('div');
+    name.className = 'product-name';
+    name.textContent = p.name;
+
+    const price = document.createElement('div');
+    price.className = 'product-price';
+    price.textContent = ${p.price} ${p.currency};
+
+    if (lowestPrices[p.name].some(lp => lp.store === p.store && lp.location === p.location)) {
+      price.classList.add('lowest');
+    }
+
+    const store = document.createElement('div');
+    store.textContent = ${p.store} - ${p.location};
+
+    const specs = document.createElement('div');
+    specs.textContent = p.specs;
+
+    card.append(name, price, store, specs);
+    container.appendChild(card);
   });
+}
 
-  Object.values(grouped).forEach(group => {
-    const sorted = group.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-    const lowestPrice = parseFloat(sorted[0].price);
-    const productCard = document.createElement("div");
-    productCard.className = "product-card";
+function filterAndSearch(products) {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const location = document.getElementById('locationFilter').value;
 
-    sorted.forEach(item => {
-      const entry = document.createElement("div");
-      entry.className = "product-entry";
-      if (parseFloat(item.price) === lowestPrice) {
-        entry.classList.add("lowest");
-      }
-      entry.innerHTML = `
-        <strong>${item.name}</strong> <br/>
-        Brand: ${item.brand} <br/>
-        Store: ${item.store}, ${item.location} <br/>
-        Price: ${item.price} ${item.currency} per ${item.unit} <br/>
-        Specs: ${item.specs}
-      `;
-      productCard.appendChild(entry);
-    });
+  const filtered = products.filter(p =>
+    (p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query)) &&
+    (!location || p.location === location)
+  );
 
-    container.appendChild(productCard);
-  });
+  displayProducts(filtered);
 }
 
 function populateLocationFilter(products) {
-  const filter = document.getElementById("locationFilter");
-  const locations = [...new Set(products.map(p => p.location))];
-  locations.sort().forEach(loc => {
-    const option = document.createElement("option");
-    option.value = loc;
-    option.textContent = loc;
-    filter.appendChild(option);
+  const dropdown = document.getElementById('locationFilter');
+  const locations = [...new Set(products.map(p => p.location))].sort();
+  locations.forEach(loc => {
+    const opt = document.createElement('option');
+    opt.value = loc;
+    opt.textContent = loc;
+    dropdown.appendChild(opt);
   });
 }
 
-async function initialize() {
-  let products = await fetchProducts();
-  renderProducts(products);
+document.addEventListener('DOMContentLoaded', async () => {
+  const products = await fetchProducts();
   populateLocationFilter(products);
+  displayProducts(products);
 
-  const searchInput = document.getElementById("searchInput");
-  const locationFilter = document.getElementById("locationFilter");
-
-  function filterProducts() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const selectedLocation = locationFilter.value;
-
-    const filtered = products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm) || p.brand.toLowerCase().includes(searchTerm);
-      const matchesLocation = !selectedLocation || p.location === selectedLocation;
-      return matchesSearch && matchesLocation;
-    });
-
-    renderProducts(filtered);
-  }
-
-  searchInput.addEventListener("input", filterProducts);
-  locationFilter.addEventListener("change", filterProducts);
-}
-
-initialize();
+  document.getElementById('searchInput').addEventListener('input', () => filterAndSearch(products));
+  document.getElementById('locationFilter').addEventListener('change', () => filterAndSearch(products));
+});
