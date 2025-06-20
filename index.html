@@ -8,39 +8,43 @@
 </head>
 <body>
   <header>
-    <img src="logo-big.png" alt="Prices Checker Logo" class="logo" />
-    <h1>Prices Checker</h1>
-    <p class="slogan">Checks and Compares Prices of Everything</p>
+    <div class="header-container">
+      <img src="logo-big.png" alt="Prices Checker Logo" class="logo" />
+      <div class="header-title">
+        <h1>Prices Checker</h1>
+        <p class="tagline">Checks and Compares Prices of Everything</p>
+      </div>
+    </div>
   </header>
 
-  <div class="filters">
-    <input type="text" id="searchInput" placeholder="Search by name or brand..." />
-    <select id="locationFilter">
-      <option value="">All Locations</option>
-    </select>
-  </div>
+  <main>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search by name or brand..." />
+      <select id="locationFilter">
+        <option value="">All Locations</option>
+      </select>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Product Name</th>
-        <th>Category</th>
-        <th>Brand</th>
-        <th>Store</th>
-        <th>Location</th>
-        <th>Price</th>
-        <th>Currency</th>
-        <th>Unit</th>
-        <th>Specs</th>
-        <th>Lazada Link</th>
-        <th>Image</th>
-        <th>Verified</th>
-      </tr>
-    </thead>
-    <tbody id="productTableBody">
-      <!-- Dynamic rows will be inserted here -->
-    </tbody>
-  </table>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Category</th>
+          <th>Brand</th>
+          <th>Store</th>
+          <th>Location</th>
+          <th>Price</th>
+          <th>Currency</th>
+          <th>Unit</th>
+          <th>Specs</th>
+          <th>Lazada Link</th>
+          <th>Image</th>
+          <th>Verified</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
 
   <script src="script.js"></script>
 </body>
