@@ -1,107 +1,88 @@
 const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
 
-const categoryFilter = document.getElementById('categoryFilter');
-const locationFilter = document.getElementById('locationFilter');
-const searchInput = document.getElementById('searchInput');
-const resultsContainer = document.getElementById('resultsContainer');
-
-let allData = [];
-
-async function fetchData() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+async function fetchProducts() {
+  const response = await fetch(${SUPABASE_URL}/rest/v1/products?select=*, {
     headers: {
       apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
+      Authorization: Bearer ${SUPABASE_KEY}
     }
   });
-  const data = await res.json();
-  allData = removeDuplicates(data);
-  populateFilters();
-  renderResults();
+  const data = await response.json();
+  return data;
 }
 
-function removeDuplicates(data) {
-  const seen = new Set();
-  return data.filter(item => {
-    const key = `${item.name}|${item.brand}|${item.store}|${item.location}|${item.specs}|${item.unit}|${item.price}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+function renderProducts(products) {
+  const container = document.getElementById("productContainer");
+  container.innerHTML = "";
+
+  const grouped = {};
+  products.forEach(product => {
+    const key = product.name + product.unit + product.specs;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(product);
+  });
+
+  Object.values(grouped).forEach(group => {
+    const sorted = group.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    const lowestPrice = parseFloat(sorted[0].price);
+    const productCard = document.createElement("div");
+    productCard.className = "product-card";
+
+    sorted.forEach(item => {
+      const entry = document.createElement("div");
+      entry.className = "product-entry";
+      if (parseFloat(item.price) === lowestPrice) {
+        entry.classList.add("lowest");
+      }
+      entry.innerHTML = `
+        <strong>${item.name}</strong> <br/>
+        Brand: ${item.brand} <br/>
+        Store: ${item.store}, ${item.location} <br/>
+        Price: ${item.price} ${item.currency} per ${item.unit} <br/>
+        Specs: ${item.specs}
+      `;
+      productCard.appendChild(entry);
+    });
+
+    container.appendChild(productCard);
   });
 }
 
-function populateFilters() {
-  const categories = Array.from(new Set(allData.map(item => item.category))).sort();
-  const locations = Array.from(new Set(allData.map(item => item.location))).sort();
-
-  categoryFilter.innerHTML = '<option value="All">All Categories</option>';
-  locationFilter.innerHTML = '<option value="All">All Locations</option>';
-
-  categories.forEach(category => {
-    const opt = document.createElement("option");
-    opt.value = category;
-    opt.textContent = category;
-    categoryFilter.appendChild(opt);
-  });
-
-  locations.forEach(location => {
-    const opt = document.createElement("option");
-    opt.value = location;
-    opt.textContent = location;
-    locationFilter.appendChild(opt);
+function populateLocationFilter(products) {
+  const filter = document.getElementById("locationFilter");
+  const locations = [...new Set(products.map(p => p.location))];
+  locations.sort().forEach(loc => {
+    const option = document.createElement("option");
+    option.value = loc;
+    option.textContent = loc;
+    filter.appendChild(option);
   });
 }
 
-function renderResults() {
-  const categoryValue = categoryFilter.value;
-  const locationValue = locationFilter.value;
-  const searchValue = searchInput.value.toLowerCase();
+async function initialize() {
+  let products = await fetchProducts();
+  renderProducts(products);
+  populateLocationFilter(products);
 
-  const filtered = allData.filter(item =>
-    (categoryValue === "All" || item.category === categoryValue) &&
-    (locationValue === "All" || item.location === locationValue) &&
-    (
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.brand?.toLowerCase().includes(searchValue) ||
-      item.store?.toLowerCase().includes(searchValue)
-    )
-  );
+  const searchInput = document.getElementById("searchInput");
+  const locationFilter = document.getElementById("locationFilter");
 
-  resultsContainer.innerHTML = "";
+  function filterProducts() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedLocation = locationFilter.value;
 
-  const table = document.createElement("table");
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Brand</th>
-        <th>Store</th>
-        <th>Location</th>
-        <th>Specs</th>
-        <th>Unit</th>
-        <th>Price</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${filtered.map(item => `
-        <tr>
-          <td>${item.name || ""}</td>
-          <td>${item.brand || ""}</td>
-          <td>${item.store || ""}</td>
-          <td>${item.location || ""}</td>
-          <td>${item.specs || ""}</td>
-          <td>${item.unit || ""}</td>
-          <td class="lowest-price">₱${item.price?.toFixed(2) || ""}</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  `;
-  resultsContainer.appendChild(table);
+    const filtered = products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm) || p.brand.toLowerCase().includes(searchTerm);
+      const matchesLocation = !selectedLocation || p.location === selectedLocation;
+      return matchesSearch && matchesLocation;
+    });
+
+    renderProducts(filtered);
+  }
+
+  searchInput.addEventListener("input", filterProducts);
+  locationFilter.addEventListener("change", filterProducts);
 }
 
-searchInput.addEventListener("input", renderResults);
-categoryFilter.addEventListener("change", renderResults);
-locationFilter.addEventListener("change", renderResults);
-
-fetchData();
+initialize();
