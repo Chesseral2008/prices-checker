@@ -2,73 +2,52 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: #f5f5f5;
+  background: #fff;
+  color: #000;
 }
 
 header {
-  background-color: #ffffff;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #ccc;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.logo-title {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  text-align: left;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+  margin-left: 10px;
 }
 
 .logo {
-  height: 50px;
+  width: 60px;
+  vertical-align: middle;
 }
 
-.slogan {
-  margin: 0;
-  color: #444;
-  font-size: 0.9rem;
-}
-
-.filters {
+.controls {
   display: flex;
   gap: 10px;
+  padding: 15px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #ccc;
 }
 
-input[type="text"], select {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-}
-
-main {
-  padding: 2rem;
-  overflow-x: auto;
+.controls input, .controls select {
+  padding: 10px;
+  font-size: 1em;
+  width: 250px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
-  font-size: 0.95rem;
+  margin-top: 0;
 }
 
 th, td {
   padding: 10px;
+  border: 1px solid #ddd;
   text-align: left;
-  border-bottom: 1px solid #ddd;
 }
 
-th {
-  background-color: #f0f0f0;
+thead {
+  background-color: #f2f2f2;
 }
 
-.highlight {
-  background-color: #c6f6c6;
-  font-weight: bold;
-}
-
-img {
-  border-radius: 4px;
+img.product-image {
+  max-width: 60px;
 }
