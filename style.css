@@ -2,52 +2,86 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: #fff;
-  color: #000;
+  background-color: #ffffff;
+  color: #000000;
 }
 
-header {
-  text-align: left;
-  padding: 20px;
-  border-bottom: 1px solid #ddd;
-  margin-left: 10px;
-}
-
-.logo {
-  width: 60px;
-  vertical-align: middle;
-}
-
-.controls {
+header.app-header {
   display: flex;
-  gap: 10px;
-  padding: 15px;
-  background: #f8f8f8;
-  border-bottom: 1px solid #ccc;
+  align-items: center;
+  padding: 20px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ddd;
 }
 
-.controls input, .controls select {
-  padding: 10px;
+header.app-header img.app-logo {
+  height: 60px;
+  margin-right: 15px;
+}
+
+header.app-header h1 {
+  margin: 0;
+  font-size: 2em;
+}
+
+header.app-header p {
+  margin: 5px 0 0;
   font-size: 1em;
-  width: 250px;
+  color: #333;
+}
+
+main {
+  padding: 20px;
+}
+
+.filters {
+  margin-bottom: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filters input,
+.filters select {
+  padding: 8px;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 0;
-}
-
-th, td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: left;
 }
 
 thead {
   background-color: #f2f2f2;
 }
 
-img.product-image {
-  max-width: 60px;
+th, td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+  vertical-align: top;
+}
+
+th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+.green-price {
+  color: green;
+  font-weight: bold;
+}
+
+img.product-img {
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  display: block;
 }
