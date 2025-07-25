@@ -4,28 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prices Checker</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
+  <script defer src="script.js"></script>
 </head>
 <body>
   <header>
-    <div class="header-container">
-      <img src="logo-big.png" alt="Prices Checker Logo" class="logo" />
-      <div class="header-title">
-        <h1>Prices Checker</h1>
-        <p class="tagline">Checks and Compares Prices of Everything</p>
-      </div>
-    </div>
+    <img src="https://i.imgur.com/kcZ8Z3p.png" alt="Prices Checker Logo" class="logo">
+    <h1>Prices Checker</h1>
+    <p>Checks and Compares Prices of Everything</p>
   </header>
 
   <main>
-    <div class="controls">
-      <input type="text" id="searchInput" placeholder="Search by name or brand..." />
+    <div class="search-controls">
+      <input type="text" id="searchInput" placeholder="Search by name or brand..."/>
       <select id="locationFilter">
         <option value="">All Locations</option>
       </select>
     </div>
 
-    <table id="dataTable">
+    <table id="productTable">
       <thead>
         <tr>
           <th>Product Name</th>
@@ -42,10 +39,10 @@
           <th>Verified</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="tableBody">
+        <!-- Data loads here -->
+      </tbody>
     </table>
   </main>
-
-  <script src="script.js"></script>
 </body>
 </html>
