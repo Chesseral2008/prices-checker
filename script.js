@@ -1,93 +1,68 @@
-// Supabase connection
-const SUPABASE_URL = 'https://atyjvpsjlhvzpqmqyylv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA';
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('searchInput');
+  const locationFilter = document.getElementById('locationFilter');
+  const productTableBody = document.querySelector('#productTable tbody');
 
-const tableBody = document.getElementById("productTableBody");
-const searchInput = document.getElementById("searchInput");
-const locationFilter = document.getElementById("locationFilter");
-
-async function fetchData() {
-    const response = await fetch(${SUPABASE_URL}/rest/v1/products?select=*, {
-        headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: Bearer ${SUPABASE_KEY}
-        }
+  async function fetchData() {
+    const response = await fetch('https://atyjvpsjlhvzpqmqyylv.supabase.co/rest/v1/products?select=*', {
+      headers: {
+        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eWp2cHNqbGh2enBxbXF5eWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI5NjEsImV4cCI6MjA1OTI4ODk2MX0.bVmzY9wQI32Xrnmy5HwXzy8tUIPPTkSf-lg6p1nQ_LA',
+      }
     });
-    const data = await response.json();
-    return data;
-}
+    return await response.json();
+  }
 
-function renderTable(data) {
-    tableBody.innerHTML = "";
-
-    const searchValue = searchInput.value.toLowerCase();
-    const selectedLocation = locationFilter.value;
-
-    const groupedByName = {};
+  function renderTable(data) {
+    productTableBody.innerHTML = "";
+    const uniqueLocations = new Set();
 
     data.forEach(item => {
-        const name = item["Product Name"];
-        if (!groupedByName[name]) {
-            groupedByName[name] = [];
-        }
-        groupedByName[name].push(item);
+      uniqueLocations.add(item.location);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.name}</td>
+        <td>${item.category}</td>
+        <td>${item.brand}</td>
+        <td>${item.store}</td>
+        <td>${item.location}</td>
+        <td>${item.price}</td>
+        <td>${item.currency}</td>
+        <td>${item.unit}</td>
+        <td>${item.specs}</td>
+        <td><a href="${item.lazada_link || '#'}" target="_blank">Link</a></td>
+        <td>${item.image_url ? `<img src="${item.image_url}" class="product-image" />` : ''}</td>
+        <td>${item.is_verified ? '✔️' : ''}</td>
+      `;
+      productTableBody.appendChild(row);
     });
 
-    for (const name in groupedByName) {
-        const group = groupedByName[name];
-        const minPrice = Math.min(...group.map(item => parseFloat(item.Price)));
+    // Populate filter
+    locationFilter.innerHTML = '<option value="All">All Locations</option>';
+    [...uniqueLocations].sort().forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc;
+      opt.textContent = loc;
+      locationFilter.appendChild(opt);
+    });
+  }
 
-        group.forEach(item => {
-            const matchesSearch = name.toLowerCase().includes(searchValue) || item.Brand.toLowerCase().includes(searchValue);
-            const matchesLocation = selectedLocation === "" || item.Location === selectedLocation;
+  function applyFilters(data) {
+    const keyword = searchInput.value.toLowerCase();
+    const selectedLocation = locationFilter.value;
 
-            if (matchesSearch && matchesLocation) {
-                const row = document.createElement("tr");
+    return data.filter(item =>
+      (item.name.toLowerCase().includes(keyword) || item.brand.toLowerCase().includes(keyword)) &&
+      (selectedLocation === "All" || item.location === selectedLocation)
+    );
+  }
 
-                const columns = [
-                    "Product Name", "Category", "Brand", "Store Name", "Location", "Price", "Currency",
-                    "Unit", "Specs", "Lazada Link", "Image URL", "is_verified"
-                ];
+  let allData = [];
+  fetchData().then(data => {
+    allData = data;
+    renderTable(data);
+  });
 
-                columns.forEach(key => {
-                    const cell = document.createElement("td");
-
-                    if (key === "Lazada Link" && item[key]) {
-                        const link = document.createElement("a");
-                        link.href = item[key];
-                        link.target = "_blank";
-                        link.textContent = "Link";
-                        cell.appendChild(link);
-                    } else if (key === "Image URL" && item[key]) {
-                        const img = document.createElement("img");
-                        img.src = item[key];
-                        img.alt = "Product Image";
-                        img.style.width = "50px";
-                        cell.appendChild(img);
-                    } else {
-                        cell.textContent = item[key] !== null ? item[key] : "";
-                    }
-
-                    if (key === "Price" && parseFloat(item[key]) === minPrice) {
-                        cell.style.color = "green";
-                        cell.style.fontWeight = "bold";
-                    }
-
-                    row.appendChild(cell);
-                });
-
-                tableBody.appendChild(row);
-            }
-        });
-    }
-}
-
-searchInput.addEventListener("input", () => {
-    fetchData().then(renderTable);
+  searchInput.addEventListener('input', () => renderTable(applyFilters(allData)));
+  locationFilter.addEventListener('change', () => renderTable(applyFilters(allData)));
 });
-
-locationFilter.addEventListener("change", () => {
-    fetchData().then(renderTable);
-});
-
-fetchData().then(renderTable);
