@@ -1,161 +1,66 @@
-// script.js — frontend only; NO secrets here
-
-// --- DOM handles ---
-const tableBody      = document.querySelector('#productsTable tbody');
-const locationFilter = document.getElementById('locationFilter');
-const searchInput    = document.getElementById('searchInput');
-
-// Internal cache of products so filters are instant
-let ALL_PRODUCTS = [];
-
-// Small helper to escape text before inserting into HTML
-const esc = (v) =>
-  String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
-// Debounce for search input
-function debounce(fn, ms = 250) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
-  };
-}
-
-// Fetch from our serverless route (no keys in the browser)
-async function fetchProducts() {
-  // Optional: show a quick loading row
-  if (tableBody) {
-    tableBody.innerHTML =
-      `<tr><td colspan="12" style="text-align:center;opacity:.7">Loading…</td></tr>`;
-  }
-
+// /api/products.js  (Vercel Serverless Function)
+export default async function handler(req, res) {
   try {
-    const res = await fetch('/api/products', { method: 'GET' });
-    if (!res.ok) throw new Error(`API responded ${res.status}`);
-    const json = await res.json();
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const q = url.searchParams.get('q') || '';
 
-    // Be defensive about the shape
-    const data =
-      Array.isArray(json) ? json :
-      Array.isArray(json?.data) ? json.data :
-      Array.isArray(json?.items) ? json.items : [];
-
-    ALL_PRODUCTS = data;
-    populateLocations(data);
-    renderTable(data);
-  } catch (err) {
-    console.error('Failed to load products:', err);
-    if (tableBody) {
-      tableBody.innerHTML =
-        `<tr><td colspan="12" style="color:#b00;text-align:center">Failed to load products.</td></tr>`;
+    // No query? return empty list (frontend will show "No results")
+    if (!q) {
+      return res.status(200).json([]);
     }
-  }
-}
 
-function populateLocations(items) {
-  if (!locationFilter) return;
-  const set = new Set();
-  items.forEach(p => {
-    if (p?.location) set.add(p.location);
-  });
+    const { GOOGLE_API_KEY, CSE_ENGINE_ID } = process.env;
+    if (!GOOGLE_API_KEY || !CSE_ENGINE_ID) {
+      return res.status(500).json({ error: 'Missing GOOGLE_API_KEY or CSE_ENGINE_ID' });
+    }
 
-  // Fill the dropdown
-  locationFilter.innerHTML = `<option value="">All Locations</option>`;
-  [...set].sort((a, b) => String(a).localeCompare(String(b))).forEach(loc => {
-    const opt = document.createElement('option');
-    opt.value = loc;
-    opt.textContent = loc;
-    locationFilter.appendChild(opt);
-  });
-}
+    // Call Google Programmable Search
+    const api = new URL('https://www.googleapis.com/customsearch/v1');
+    api.searchParams.set('key', GOOGLE_API_KEY);
+    api.searchParams.set('cx', CSE_ENGINE_ID);
+    api.searchParams.set('q', q);
+    // optionally tweak:
+    // api.searchParams.set('num', '10');
 
-function applyFilters() {
-  const q = (searchInput?.value || '').trim().toLowerCase();
-  const loc = locationFilter?.value || '';
+    const gRes = await fetch(api.toString());
+    if (!gRes.ok) {
+      const text = await gRes.text();
+      return res.status(502).json({ error: 'Google CSE error', details: text });
+    }
 
-  return ALL_PRODUCTS.filter(p => {
-    const matchesQ =
-      !q ||
-      String(p?.name ?? '').toLowerCase().includes(q) ||
-      String(p?.brand ?? '').toLowerCase().includes(q);
+    const data = await gRes.json();
+    const items = Array.isArray(data.items) ? data.items : [];
 
-    const matchesLoc = !loc || String(p?.location ?? '') === loc;
+    // Map Google CSE items to your table columns
+    const mapped = items.map((it) => {
+      const host = (() => {
+        try { return new URL(it.link).host; } catch { return ''; }
+      })();
 
-    return matchesQ && matchesLoc;
-  });
-}
+      const image =
+        it.pagemap?.cse_image?.[0]?.src ||
+        it.pagemap?.metatags?.[0]?.['og:image'] ||
+        '';
 
-function renderTable(items) {
-  if (!tableBody) return;
-
-  if (!items?.length) {
-    tableBody.innerHTML =
-      `<tr><td colspan="12" style="text-align:center;opacity:.7">No results.</td></tr>`;
-    return;
-  }
-
-  // Build rows
-  const rows = items.map(p => {
-    const name      = esc(p?.name);
-    const category  = esc(p?.category);
-    const brand     = esc(p?.brand);
-    const store     = esc(p?.store);
-    const location  = esc(p?.location);
-    const price     = p?.price ?? '';
-    const currency  = esc(p?.currency);
-    const unit      = esc(p?.unit);
-    const specs     = esc(p?.specs);
-    const linkHTML  = p?.product_link
-      ? `<a href="${esc(p.product_link)}" target="_blank" rel="noopener">View</a>`
-      : '';
-    const imgHTML   = p?.image_url
-      ? `<img src="${esc(p.image_url)}" alt="Image" style="max-width:60px;max-height:60px;object-fit:contain" />`
-      : '';
-    const verified  = p?.is_verified ? '✅' : '';
-
-    return `
-      <tr>
-        <td>${name}</td>
-        <td>${category}</td>
-        <td>${brand}</td>
-        <td>${store}</td>
-        <td>${location}</td>
-        <td>${price}</td>
-        <td>${currency}</td>
-        <td>${unit}</td>
-        <td>${specs}</td>
-        <td>${linkHTML}</td>
-        <td>${imgHTML}</td>
-        <td>${verified}</td>
-      </tr>
-    `;
-  });
-
-  tableBody.innerHTML = rows.join('');
-}
-
-// Wire up UI events
-function initFilters() {
-  if (searchInput) {
-    searchInput.addEventListener(
-      'input',
-      debounce(() => renderTable(applyFilters()), 200)
-    );
-  }
-  if (locationFilter) {
-    locationFilter.addEventListener('change', () => {
-      renderTable(applyFilters());
+      return {
+        name: it.title || '',
+        category: '',          // unknown from Google, leave blank or infer later
+        brand: '',             // unknown
+        store: host || '',
+        location: '',          // unknown
+        price: '',             // unknown
+        currency: '',          // unknown
+        unit: '',              // unknown
+        specs: it.snippet || '',
+        product_link: it.link || '',
+        image_url: image,
+        is_verified: false,
+      };
     });
+
+    return res.status(200).json(mapped);
+  } catch (err) {
+    console.error('API /products error', err);
+    return res.status(500).json({ error: 'Server error' });
   }
 }
-
-// Boot
-document.addEventListener('DOMContentLoaded', () => {
-  initFilters();
-  fetchProducts();
-});
