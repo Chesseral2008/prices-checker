@@ -1,49 +1,44 @@
 // script.js
-// Prices Checker - fetches data from Supabase and displays in the table
 
-// Initialize Supabase client
-const { createClient } = supabase;
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";  // move to Vercel env later!
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function fetchProducts() {
+  try {
+    // Call your serverless function instead of Supabase directly
+    const response = await fetch('/api/products');
 
-// Function to fetch and display products
-async function loadProducts() {
-  const tableBody = document.querySelector("#products-table tbody");
-  tableBody.innerHTML = "<tr><td colspan='12'>Loading...</td></tr>";
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
 
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select("*");
-
-  if (error) {
+    const products = await response.json();
+    displayProducts(products);
+  } catch (error) {
     console.error("Error fetching products:", error);
-    tableBody.innerHTML = "<tr><td colspan='12'>Error loading data</td></tr>";
+    document.getElementById("products").innerHTML = 
+      `<p style="color:red;">Failed to load products. Check console for details.</p>`;
+  }
+}
+
+function displayProducts(products) {
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+
+  if (!products || products.length === 0) {
+    container.innerHTML = "<p>No products found.</p>";
     return;
   }
 
-  tableBody.innerHTML = "";
-  data.forEach((product) => {
-    const row = document.createElement("tr");
+  products.forEach(product => {
+    const div = document.createElement("div");
+    div.classList.add("product");
 
-    row.innerHTML = `
-      <td>${product.product_name || ""}</td>
-      <td>${product.category || ""}</td>
-      <td>${product.brand || ""}</td>
-      <td>${product.store || ""}</td>
-      <td>${product.location || ""}</td>
-      <td>${product.price || ""}</td>
-      <td>${product.currency || ""}</td>
-      <td>${product.unit || ""}</td>
-      <td>${product.specs || ""}</td>
-      <td><a href="${product.product_link}" target="_blank">View</a></td>
-      <td>${product.image ? `<img src="${product.image}" width="50"/>` : ""}</td>
-      <td>${product.verified ? "✅" : "❌"}</td>
+    div.innerHTML = `
+      <h3>${product.name}</h3>
+      <p>Price: $${product.price}</p>
     `;
 
-    tableBody.appendChild(row);
+    container.appendChild(div);
   });
 }
 
-// Run on page load
-document.addEventListener("DOMContentLoaded", loadProducts);
+// Run fetch on page load
+document.addEventListener("DOMContentLoaded", fetchProducts);
