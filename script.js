@@ -1,74 +1,68 @@
-// /api/products.js
+// script.js — fetches from our /api/products and renders the table
 
-export default async function handler(req, res) {
+const tableBody = document.querySelector('#productsTable tbody');
+const locationFilter = document.getElementById('locationFilter');
+const searchInput = document.getElementById('searchInput');
+
+function rowHTML(item) {
+  const img = item.image_url ? `<img src="${item.image_url}" alt="" style="max-width:60px">` : "";
+  const link = item.product_link ? `<a href="${item.product_link}" target="_blank">View</a>` : "";
+  return `
+    <tr>
+      <td>${item.name || ""}</td>
+      <td>${item.category || ""}</td>
+      <td>${item.brand || ""}</td>
+      <td>${item.store || ""}</td>
+      <td>${item.location || ""}</td>
+      <td>${item.price ?? ""}</td>
+      <td>${item.currency || ""}</td>
+      <td>${item.unit || ""}</td>
+      <td>${item.specs || ""}</td>
+      <td>${link}</td>
+      <td>${img}</td>
+      <td>${item.is_verified ? "✅" : ""}</td>
+    </tr>
+  `;
+}
+
+function populateTable(data) {
+  tableBody.innerHTML = data.map(rowHTML).join("");
+  const locs = [...new Set(data.map(d => d.location).filter(Boolean))].sort();
+  locationFilter.innerHTML = `<option value="">All Locations</option>` +
+    locs.map(l => `<option value="${l}">${l}</option>`).join("");
+}
+
+function applyFilters(data) {
+  const q = (searchInput.value || "").toLowerCase();
+  const loc = locationFilter.value || "";
+  return data.filter(d => {
+    const matchQ = (d.name || "").toLowerCase().includes(q) ||
+                   (d.brand || "").toLowerCase().includes(q) ||
+                   (d.store || "").toLowerCase().includes(q);
+    const matchLoc = !loc || d.location === loc;
+    return matchQ && matchLoc;
+  });
+}
+
+async function searchAndRender() {
+  const q = searchInput.value.trim();
+  if (!q) { tableBody.innerHTML = ""; return; }
+
   try {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const q = url.searchParams.get('q') || '';
-    const debug = url.searchParams.get('debug') === '1';
-
-    const { GOOGLE_API_KEY, CSE_ENGINE_ID } = process.env;
-
-    // Basic env diagnostics
-    if (!GOOGLE_API_KEY || !CSE_ENGINE_ID) {
-      const msg = 'Missing GOOGLE_API_KEY or CSE_ENGINE_ID';
-      if (debug) return res.status(500).json({ ok: false, reason: msg, have: {
-        GOOGLE_API_KEY: !!GOOGLE_API_KEY,
-        CSE_ENGINE_ID: !!CSE_ENGINE_ID
-      }});
-      return res.status(200).json([]); // normal mode returns empty
-    }
-
-    if (!q) {
-      // No query → nothing to search
-      if (debug) return res.status(200).json({ ok: true, reason: 'empty query', items: [] });
-      return res.status(200).json([]);
-    }
-
-    // Call Google CSE
-    const api = new URL('https://www.googleapis.com/customsearch/v1');
-    api.searchParams.set('key', GOOGLE_API_KEY);
-    api.searchParams.set('cx', CSE_ENGINE_ID);
-    api.searchParams.set('q', q);
-
-    const gRes = await fetch(api.toString());
-    const rawText = await gRes.text(); // read as text for easier debugging
-    let parsed;
-    try { parsed = JSON.parse(rawText); } catch { parsed = null; }
-
-    if (!gRes.ok) {
-      if (debug) {
-        return res.status(502).json({ ok: false, reason: 'Google CSE HTTP error', status: gRes.status, body: rawText });
-      }
-      return res.status(200).json([]);
-    }
-
-    const items = Array.isArray(parsed?.items) ? parsed.items : [];
-
-    const mapped = items.map(it => {
-      const host = (() => { try { return new URL(it.link).host; } catch { return ''; }})();
-      const image =
-        it.pagemap?.cse_image?.[0]?.src ||
-        it.pagemap?.metatags?.[0]?.['og:image'] || '';
-      return {
-        name: it.title || '',
-        category: '',
-        brand: '',
-        store: host,
-        location: '',
-        price: '',
-        currency: '',
-        unit: '',
-        specs: it.snippet || '',
-        product_link: it.link || '',
-        image_url: image,
-        is_verified: false,
-      };
-    });
-
-    if (debug) return res.status(200).json({ ok: true, count: mapped.length, sample: mapped[0] || null });
-    return res.status(200).json(mapped);
-  } catch (err) {
-    if (debug) return res.status(500).json({ ok: false, reason: 'server error', error: String(err) });
-    return res.status(200).json([]);
+    const r = await fetch(`/api/products?q=${encodeURIComponent(q)}`);
+    const data = await r.json();
+    populateTable(applyFilters(data));
+  } catch (e) {
+    console.error(e);
+    tableBody.innerHTML = `<tr><td colspan="12">Error loading results</td></tr>`;
   }
 }
+
+searchInput.addEventListener('input', () => {
+  // debounce a little
+  clearTimeout(window.__pcTimer);
+  window.__pcTimer = setTimeout(searchAndRender, 300);
+});
+locationFilter.addEventListener('change', searchAndRender);
+
+// Initial (no query) — leave empty
