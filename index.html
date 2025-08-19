@@ -1,49 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Prices Checker</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="app-header">
-    <img src="logo-big.png" alt="Prices Checker Logo" class="app-logo" />
-    <div>
-      <h1>Prices Checker</h1>
-      <p>Checks and Compares Prices of Everything</p>
-    </div>
-  </header>
+<!-- search bar -->
+<form id="search-form" class="search-row" style="margin:16px 0; display:flex; gap:12px;">
+  <input
+    id="query"
+    type="text"
+    value="laptop"
+    placeholder="Search for a product (e.g., laptop)"
+    style="flex:1; padding:10px; font-size:16px;"
+    aria-label="Search query"
+  />
+  <select id="location" aria-label="Location" style="padding:10px; font-size:16px;">
+    <option value="">All Locations</option>
+    <option value="US">United States</option>
+    <option value="SA">Saudi Arabia</option>
+  </select>
+  <button type="submit" style="padding:10px 16px; font-size:16px;">Search</button>
+</form>
 
-  <main>
-    <div class="filters">
-      <input type="text" id="searchInput" placeholder="Search by name or brand..." />
-      <select id="locationFilter">
-        <option value="">All Locations</option>
-      </select>
-    </div>
-
-    <table id="productsTable">
-      <thead>
-        <tr>
-          <th>Product Name</th>
-          <th>Category</th>
-          <th>Brand</th>
-          <th>Store</th>
-          <th>Location</th>
-          <th>Price</th>
-          <th>Currency</th>
-          <th>Unit</th>
-          <th>Specs</th>
-          <th>Product Link</th> <!-- ✅ updated -->
-          <th>Image</th>
-          <th>Verified</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </main>
-
-  <script src="script.js"></script>
-</body>
-</html>
+<!-- results table -->
+<table class="results-table" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th>Product Name</th>
+      <th>Category</th>
+      <th>Brand</th>
+      <th>Store</th>
+      <th>Location</th>
+      <th>Price</th>
+      <th>Currency</th>
+      <th>Unit</th>
+      <th>Specs</th>
+      <th>Product Link</th>
+      <th>Image</th>
+      <th>Verified</th>
+    </tr>
+  </thead>
+  <tbody id="results-body">
+    <!-- rows get injected here -->
+  </tbody>
+</table>
