@@ -1,109 +1,75 @@
-// script.js
-// Filters out non-product/service pages and renders the table
+// script.js — robust renderer for /api/products
 
-// --- Helpers -------------------------------------------------------------
-function getHostFromUrl(url = "") {
-  try { return new URL(url).hostname.replace(/^www\./, ""); }
-  catch { return ""; }
-}
+// ---------- helpers ----------
+const $ = (s) => document.querySelector(s);
+const tbody = () => $("#results-body");
 
-function clean(text = "") {
-  return String(text).replace(/\s+/g, " ").trim();
-}
+function clearTable() { tbody().innerHTML = ""; }
+function rowText(s) { return (s ?? "").toString().replace(/\s+/g, " ").trim(); }
+function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } }
 
-function money(text = "") {
-  // Extract a currency symbol and numeric portion if present
-  const m = clean(text).match(/^([^\d\-+]*)(.*)$/);
-  if (!m) return { price: null, currency: null };
-  const currency = clean(m[1]) || null;
-  const priceText = clean(m[2]).replace(/[^\d.,\-]/g, "");
-  const price = priceText || null;
-  return { price, currency };
-}
-
-// --- Allow/Block host lists (edit freely) --------------------------------
-const ALLOWED_HOSTS = new Set([
-  "amazon.com", "bestbuy.com", "walmart.com", "samsung.com",
-  "lenovo.com", "hp.com", "dell.com", "apple.com", "store.google.com",
-  "microcenter.com", "newegg.com", "bhphotovideo.com", "target.com",
-  "costco.com", "caudabe.com", "frame.work", "ebay.com"
+const ALLOWED = new Set([
+  "amazon.com","bestbuy.com","walmart.com","samsung.com","lenovo.com","hp.com",
+  "dell.com","apple.com","store.google.com","microcenter.com","newegg.com",
+  "bhphotovideo.com","target.com","costco.com","caudabe.com","frame.work","ebay.com"
+]);
+const BLOCKED = new Set([
+  "wikipedia.org","reddit.com","medium.com","youtube.com","blogspot.com",
+  "wordpress.com","x.com","twitter.com","news.ycombinator.com","pcmag.com",
+  "cnet.com","theverge.com"
 ]);
 
-const BLOCKED_HOSTS = new Set([
-  "wikipedia.org", "reddit.com", "medium.com", "youtube.com",
-  "blogspot.com", "wordpress.com", "x.com", "twitter.com",
-  "news.ycombinator.com", "pcmag.com", "cnet.com", "theverge.com"
-]);
+function isProductLike(item) {
+  const linkHost = hostOf(item.product_link || "");
+  if (!linkHost) return false;
+  if (BLOCKED.has(linkHost)) return false;
+  if (ALLOWED.has(linkHost)) return true;
 
-function isLikelyProduct(row) {
-  const host = getHostFromUrl(row.product_link || "");
-  if (!host) return false;
-  if (BLOCKED_HOSTS.has(host)) return false;
-
-  // If we explicitly allow a real store, keep it
-  if (ALLOWED_HOSTS.has(host)) return true;
-
-  // Very light heuristic: keep pages that look like product pages
-  const t = `${row.title || row.name || ""} ${row.site || ""}`.toLowerCase();
-  if (/\b(buy|price|shop|add to cart|cart|store|model|sku)\b/.test(t)) return true;
-
-  // otherwise drop it
-  return false;
+  const t = `${item.title || item.name || ""} ${item.site || ""}`.toLowerCase();
+  return /\b(buy|price|shop|add to cart|cart|store|model|sku)\b/.test(t);
 }
 
-// --- DOM helpers ---------------------------------------------------------
-const $q = (sel) => document.querySelector(sel);
-const $tbody = () => $q("#results-body");
+function messageRow(text) {
+  const tr = document.createElement("tr");
+  const td = document.createElement("td");
+  td.colSpan = 12;
+  td.style.padding = "12px";
+  td.textContent = text;
+  tr.appendChild(td);
+  return tr;
+}
 
-function clearTable() { $tbody().innerHTML = ""; }
-
-function renderRows(rows) {
+function render(rows) {
   clearTable();
-  if (!rows.length) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 11;
-    td.textContent = "No results. Try a more specific query.";
-    tr.appendChild(td);
-    $tbody().appendChild(tr);
+  if (!rows || !rows.length) {
+    tbody().appendChild(messageRow("No results. Try a broader or different keyword."));
     return;
   }
 
-  for (const r of rows) {
+  rows.forEach((r) => {
     const tr = document.createElement("tr");
 
-    const host = getHostFromUrl(r.product_link || "");
-    const title = clean(r.title || r.name || "");
-    const spec = clean(r.specs || "");
+    const title = rowText(r.title || r.name || "");
+    const category = rowText(r.category || "");
+    const brand = rowText(r.brand || "");
+    const store = hostOf(r.product_link || "") || rowText(r.site || "");
+    const location = rowText(r.location || "");
 
-    // Coerce price/currency if the row packed them together
-    let price = r.price ?? null;
-    let currency = r.currency ?? null;
-    if (!price && typeof r.price === "string" && r.price) {
-      const m = money(r.price);
-      price = m.price;
-      currency = currency || m.currency;
-    }
+    // price & currency might be split or combined; just print what we have
+    const price = r.price ?? "";
+    const currency = r.currency ?? "";
+    const unit = rowText(r.unit || "");
+    const specs = rowText(r.specs || "");
 
-    const cells = [
-      title || "(Untitled)",
-      clean(r.category || ""),
-      clean(r.brand || ""),
-      host || clean(r.site || ""),
-      clean(r.location || ""),
-      price || "",
-      currency || "",
-      clean(r.unit || ""),
-      spec || "",
-    ];
-
-    for (const c of cells) {
+    [
+      title, category, brand, store, location, price, currency, unit, specs
+    ].forEach((val) => {
       const td = document.createElement("td");
-      td.textContent = c;
+      td.textContent = val;
       tr.appendChild(td);
-    }
+    });
 
-    // Product Link
+    // product link
     const tdLink = document.createElement("td");
     if (r.product_link) {
       const a = document.createElement("a");
@@ -115,7 +81,7 @@ function renderRows(rows) {
     }
     tr.appendChild(tdLink);
 
-    // Image
+    // image
     const tdImg = document.createElement("td");
     if (r.image_url) {
       const img = document.createElement("img");
@@ -127,45 +93,59 @@ function renderRows(rows) {
     }
     tr.appendChild(tdImg);
 
-    // Verified
-    const tdVer = document.createElement("td");
-    tdVer.textContent = r.is_verified ? "✓" : "";
-    tr.appendChild(tdVer);
+    // verified
+    const tdV = document.createElement("td");
+    tdV.textContent = r.is_verified ? "✓" : "";
+    tr.appendChild(tdV);
 
-    $tbody().appendChild(tr);
+    tbody().appendChild(tr);
+  });
+}
+
+// ---------- fetch + wire ----------
+async function fetchResults(q) {
+  if (!q) {
+    clearTable();
+    return;
+  }
+  try {
+    const res = await fetch(`/api/products?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // API returns either an array or { results: [...] }
+    const list = Array.isArray(data) ? data : (data.results || []);
+    const filtered = list.filter(isProductLike);
+    render(filtered);
+  } catch (err) {
+    console.error("Search error:", err);
+    clearTable();
+    tbody().appendChild(messageRow("Could not load results. Try again in a moment."));
   }
 }
 
-// --- Search flow ---------------------------------------------------------
-async function search(q) {
-  const url = `/api/products?q=${encodeURIComponent(q)}`;
-  const res = await fetch(url, { cache: "no-store" });
-  const data = await res.json();
-
-  // data can be an array or { results: [...] }
-  const list = Array.isArray(data) ? data : (data.results || []);
-
-  // Filter to product-like rows
-  const filtered = list.filter(isLikelyProduct);
-
-  renderRows(filtered);
-}
-
 function init() {
-  const input = $q("#query");
-  const locationSelect = $q("#location"); // not used yet; kept for UI compatibility
-  const form = $q("#search-form");
+  const input = $("#query");
+  const form = $("#search-form");
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const q = input.value.trim();
-    if (!q) { clearTable(); return; }
-    search(q);
+  // Submit handler (button click)
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      fetchResults(input.value.trim());
+    });
+  }
+
+  // Enter key handler (in case form is missing / not used)
+  input.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      fetchResults(input.value.trim());
+    }
   });
 
-  // initial auto-search if there’s a value
+  // Auto search on load if there is a preset value
   if (input.value.trim()) {
-    search(input.value.trim());
+    fetchResults(input.value.trim());
   }
 }
 
