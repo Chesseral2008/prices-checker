@@ -1,40 +1,66 @@
-<!-- search bar -->
-<form id="search-form" class="search-row" style="margin:16px 0; display:flex; gap:12px;">
-  <input
-    id="query"
-    type="text"
-    value="laptop"
-    placeholder="Search for a product (e.g., laptop)"
-    style="flex:1; padding:10px; font-size:16px;"
-    aria-label="Search query"
-  />
-  <select id="location" aria-label="Location" style="padding:10px; font-size:16px;">
-    <option value="">All Locations</option>
-    <option value="US">United States</option>
-    <option value="SA">Saudi Arabia</option>
-  </select>
-  <button type="submit" style="padding:10px 16px; font-size:16px;">Search</button>
-</form>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prices Checker</title>
+  <link rel="icon" href="logo-big.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="brand">
+      <img src="logo-big.png" alt="Prices Checker logo" class="logo" />
+      <div class="titles">
+        <h1 class="site-title">Prices Checker</h1>
+        <p class="site-tagline">Checks and Compares Prices of Everything</p>
+      </div>
+    </div>
+  </header>
 
-<!-- results table -->
-<table class="results-table" style="width:100%; border-collapse:collapse;">
-  <thead>
-    <tr>
-      <th>Product Name</th>
-      <th>Category</th>
-      <th>Brand</th>
-      <th>Store</th>
-      <th>Location</th>
-      <th>Price</th>
-      <th>Currency</th>
-      <th>Unit</th>
-      <th>Specs</th>
-      <th>Product Link</th>
-      <th>Image</th>
-      <th>Verified</th>
-    </tr>
-  </thead>
-  <tbody id="results-body">
-    <!-- rows get injected here -->
-  </tbody>
-</table>
+  <main class="container">
+    <!-- Controls -->
+    <form id="search-form" class="controls" autocomplete="off">
+      <label class="visually-hidden" for="query">Search</label>
+      <input id="query" type="search" placeholder="Search by name or brand..." />
+      <label class="visually-hidden" for="location">Location</label>
+      <select id="location" aria-label="Location">
+        <option value="">All Locations</option>
+      </select>
+      <button id="searchBtn" type="submit" class="btn">Search</button>
+    </form>
+
+    <!-- Results table -->
+    <section class="table-wrap">
+      <table id="results">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Brand</th>
+            <th>Store</th>
+            <th>Location</th>
+            <th>Price</th>
+            <th>Currency</th>
+            <th>Unit</th>
+            <th>Specs</th>
+            <th>Product Link</th>
+            <th>Image</th>
+            <th>Verified</th>
+          </tr>
+        </thead>
+        <tbody id="results-body">
+          <!-- rows injected by script.js -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>© <span id="year"></span> Prices Checker</small>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
